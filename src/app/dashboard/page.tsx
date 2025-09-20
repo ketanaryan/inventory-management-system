@@ -76,8 +76,12 @@ export default function DashboardPage() {
       setQrValue(verificationUrl);
       setMessage('Batch registered successfully!');
 
-    } catch (error: any) {
-        setMessage(`Error: ${error.message}`);
+    } catch (error) {
+        if (error instanceof Error) {
+            setMessage(`Error: ${error.message}`);
+        } else {
+            setMessage('An unknown error occurred.');
+        }
     }
   };
 
