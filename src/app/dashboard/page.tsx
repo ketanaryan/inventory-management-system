@@ -4,10 +4,11 @@ import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { supabase } from '@/utils/supabase';
 import { QRCodeCanvas } from 'qrcode.react';
+import { User } from '@supabase/supabase-js';
 
 export default function DashboardPage() {
   const router = useRouter();
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
   // Form state
@@ -193,7 +194,6 @@ export default function DashboardPage() {
           </form>
         </div>
 
-        {/* QR Code and Verification */}
         {qrValue && (
           <div className="bg-white p-6 rounded-lg shadow-md flex flex-col items-center justify-center">
             <h2 className="text-2xl font-bold text-gray-800 mb-4">Verification QR Code</h2>
