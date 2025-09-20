@@ -6,6 +6,14 @@ import { supabase } from '@/utils/supabase';
 import { QRCodeCanvas } from 'qrcode.react';
 import { User } from '@supabase/supabase-js';
 
+// Define a type for the mock alternative data
+type Alternative = {
+  name: string;
+  stock: number;
+  strength: string;
+  form: string;
+};
+
 export default function DashboardPage() {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
@@ -23,9 +31,9 @@ export default function DashboardPage() {
   const [recallBatchId, setRecallBatchId] = useState('');
   const [recallMessage, setRecallMessage] = useState('');
   
-  // Find Alternatives state
+  // Find Alternatives state - Corrected type
   const [searchQuery, setSearchQuery] = useState('');
-  const [alternatives, setAlternatives] = useState<any[]>([]);
+  const [alternatives, setAlternatives] = useState<Alternative[]>([]);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -70,7 +78,8 @@ export default function DashboardPage() {
     }
 
     try {
-      const { data, error } = await supabase
+      // Fixed: Removed the unused 'data' variable
+      const { error } = await supabase
         .from('batches')
         .insert([
           { batch_id: batchId, medicines: medicines }
@@ -84,7 +93,7 @@ export default function DashboardPage() {
       setQrValue(verificationUrl);
       setMessage('Batch registered successfully!');
 
-    } catch (error) { // The 'error' type is now inferred as 'unknown'
+    } catch (error: any) {
         if (error instanceof Error) {
             setMessage(`Error: ${error.message}`);
         } else {
@@ -105,7 +114,7 @@ export default function DashboardPage() {
               throw new Error(error.message);
           }
           setRecallMessage('Batch recalled successfully!');
-      } catch (error) { // Applied the same fix here
+      } catch (error: any) {
           if (error instanceof Error) {
               setRecallMessage(`Error: ${error.message}`);
           } else {
@@ -144,27 +153,27 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="flex flex-col items-center min-h-screen bg-gray-100 p-8">
+    <div className="flex flex-col items-center min-h-screen bg-gray-100 p-4 sm:p-8">
       {/* Header */}
-      <div className="w-full max-w-5xl flex justify-between items-center mb-8 p-4 bg-white rounded-lg shadow-md">
-        <h1 className="text-3xl font-bold text-gray-800">Pharma Tracker</h1>
-        <div className="flex items-center space-x-4">
-          <span className="text-gray-600">Welcome, {user?.email}!</span>
+      <div className="w-full max-w-5xl flex flex-col sm:flex-row justify-between items-center mb-8 p-4 bg-white rounded-lg shadow-md">
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-2 sm:mb-0">Pharma Tracker</h1>
+        <div className="flex items-center space-x-2 sm:space-x-4">
+          <span className="text-gray-600 text-sm sm:text-base">Welcome, {user?.email}!</span>
           <button
             onClick={handleLogout}
-            className="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded"
+            className="bg-red-500 hover:bg-red-600 text-white font-bold py-1 px-3 rounded text-sm sm:py-2 sm:px-4 sm:text-base"
           >
             Logout
           </button>
         </div>
       </div>
-
+      
       <div className="w-full max-w-5xl grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         {/* Registration Form */}
         <div className="bg-white p-6 rounded-lg shadow-md col-span-1 md:col-span-2">
           <h2 className="text-2xl font-bold text-gray-800 mb-4">Register New Batch</h2>
           {message && (
-            <div className={`p-3 rounded-md mb-4 ${message.startsWith('Error') ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
+            <div className={`p-3 rounded-md mb-4 text-sm sm:text-base ${message.startsWith('Error') ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
               {message}
             </div>
           )}
@@ -176,7 +185,7 @@ export default function DashboardPage() {
                 id="batchId"
                 value={batchId}
                 onChange={(e) => setBatchId(e.target.value)}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-gray-800"
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm text-gray-800"
                 placeholder="e.g., DRUG-123"
                 required
               />
