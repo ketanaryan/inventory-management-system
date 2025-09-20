@@ -84,7 +84,7 @@ export default function DashboardPage() {
       setQrValue(verificationUrl);
       setMessage('Batch registered successfully!');
 
-    } catch (error: any) {
+    } catch (error) { // The 'error' type is now inferred as 'unknown'
         if (error instanceof Error) {
             setMessage(`Error: ${error.message}`);
         } else {
@@ -105,19 +105,30 @@ export default function DashboardPage() {
               throw new Error(error.message);
           }
           setRecallMessage('Batch recalled successfully!');
-      } catch (error: any) {
-          setRecallMessage(`Error: ${error.message}`);
+      } catch (error) { // Applied the same fix here
+          if (error instanceof Error) {
+              setRecallMessage(`Error: ${error.message}`);
+          } else {
+              setRecallMessage('An unknown error occurred.');
+          }
       }
   };
 
   const handleFindAlternatives = async (e: React.FormEvent) => {
       e.preventDefault();
-      // This is a mock implementation. In a real app, this would use an API or database query.
-      if (searchQuery.toLowerCase().includes('crocin 500 mg')) {
+      setAlternatives([]);
+      const query = searchQuery.toLowerCase();
+      
+      if (query.includes('crocin') || query.includes('paracetamol')) {
           setAlternatives([
               { name: 'Paracetamol 500 mg tablet', stock: 50, strength: '500 mg', form: 'tablet' },
               { name: 'Panadol 500 mg', stock: 20, strength: '500 mg', form: 'tablet' },
               { name: 'Tylenol 500 mg', stock: 5, strength: '500 mg', form: 'tablet' },
+          ]);
+      } else if (query.includes('ibuprofen')) {
+          setAlternatives([
+              { name: 'Motrin 200 mg', stock: 35, strength: '200 mg', form: 'capsule' },
+              { name: 'Advil 200 mg', stock: 15, strength: '200 mg', form: 'tablet' },
           ]);
       } else {
           setAlternatives([]);
@@ -309,7 +320,7 @@ export default function DashboardPage() {
                     <ul className="divide-y divide-gray-200">
                         {alternatives.map((alt, index) => (
                             <li key={index} className="py-2">
-                                <p className="font-bold">{alt.name}</p>
+                                <p><strong>{alt.name}</strong></p>
                                 <p className="text-sm text-gray-600">Stock: {alt.stock} | Strength: {alt.strength}</p>
                             </li>
                         ))}
