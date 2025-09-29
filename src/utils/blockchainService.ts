@@ -36,10 +36,11 @@ export const getBatch = async (batchId: string): Promise<BatchData> => {
         }
 
         return { ...data, status: currentStatus } as BatchData;
-    } catch (error) { // FIXED: Using type-safe error handling
+    } catch (error) { // Line 29: FIX APPLIED HERE
         if (error instanceof Error) {
             throw error;
         }
+        // If the error is not a standard Error object, throw a generic one
         throw new Error('An unexpected error occurred during database access.');
     }
 };
