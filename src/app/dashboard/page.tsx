@@ -31,9 +31,9 @@ export default function DashboardPage() {
   const [recallBatchId, setRecallBatchId] = useState('');
   const [recallMessage, setRecallMessage] = useState('');
   
-  // Find Alternatives state - FIXED: Used defined type
+  // Find Alternatives state - FIXED: Uses defined type (Line 28)
   const [searchQuery, setSearchQuery] = useState('');
-  const [alternatives, setAlternatives] = useState<Alternative[]>([]);
+  const [alternatives, setAlternatives] = useState<Alternative[]>([]); 
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -78,8 +78,8 @@ export default function DashboardPage() {
     }
 
     try {
-      // FIXED: Removed the unused 'data' variable
-      const { error } = await supabase
+      // FIXED: Removed the unused 'data' variable from destructuring
+      const { error } = await supabase 
         .from('batches')
         .insert([
           { batch_id: batchId, medicines: medicines }
@@ -93,8 +93,7 @@ export default function DashboardPage() {
       setQrValue(verificationUrl);
       setMessage('Batch registered successfully!');
 
-    } catch (error) {
-        // FIXED: Using type-safe error handling
+    } catch (error) { 
         if (error instanceof Error) {
             setMessage(`Error: ${error.message}`);
         } else {
@@ -107,7 +106,7 @@ export default function DashboardPage() {
       e.preventDefault();
       setRecallMessage('');
       try {
-          // FIXED: Removed the unused 'data' variable
+          // FIXED: Removed the unused 'data' variable from destructuring (Line 73)
           const { error } = await supabase
               .from('batches')
               .update({ status: 'Recalled' })
@@ -116,7 +115,7 @@ export default function DashboardPage() {
               throw new Error(error.message);
           }
           setRecallMessage('Batch recalled successfully!');
-      } catch (error) { // FIXED: Using type-safe error handling
+      } catch (error) { // FIXED: Using type-safe error handling (Line 87)
           if (error instanceof Error) {
               setRecallMessage(`Error: ${error.message}`);
           } else {

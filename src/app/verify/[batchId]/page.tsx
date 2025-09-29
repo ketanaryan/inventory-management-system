@@ -43,7 +43,7 @@ export default function VerifyPage() {
             try {
                 const data = await getBatch(batchId as string);
                 setBatchDetails(data);
-            } catch (err) { // FIXED: Removed 'err: any'
+            } catch (err) { // FIXED: Using type-safe error handling
                 if (err instanceof Error) {
                     setError(err.message);
                 } else {
