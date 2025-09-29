@@ -31,7 +31,7 @@ export default function DashboardPage() {
   const [recallBatchId, setRecallBatchId] = useState('');
   const [recallMessage, setRecallMessage] = useState('');
   
-  // Find Alternatives state - FIXED: Uses defined type (Line 28)
+  // Find Alternatives state - FIXED: Uses defined type
   const [searchQuery, setSearchQuery] = useState('');
   const [alternatives, setAlternatives] = useState<Alternative[]>([]); 
 
@@ -106,7 +106,7 @@ export default function DashboardPage() {
       e.preventDefault();
       setRecallMessage('');
       try {
-          // FIXED: Removed the unused 'data' variable from destructuring (Line 73)
+          // FIXED: Removed the unused 'data' variable from destructuring
           const { error } = await supabase
               .from('batches')
               .update({ status: 'Recalled' })
@@ -115,7 +115,7 @@ export default function DashboardPage() {
               throw new Error(error.message);
           }
           setRecallMessage('Batch recalled successfully!');
-      } catch (error) { // FIXED: Using type-safe error handling (Line 87)
+      } catch (error) { // FIXED: Using type-safe error handling
           if (error instanceof Error) {
               setRecallMessage(`Error: ${error.message}`);
           } else {
@@ -186,7 +186,7 @@ export default function DashboardPage() {
                 id="batchId"
                 value={batchId}
                 onChange={(e) => setBatchId(e.target.value)}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm text-gray-800"
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-gray-800"
                 placeholder="e.g., DRUG-123"
                 required
               />
