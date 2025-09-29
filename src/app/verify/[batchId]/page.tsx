@@ -38,13 +38,17 @@ export default function VerifyPage() {
 
     useEffect(() => {
         if (!batchId) return;
-
+        
         const fetchBatch = async () => {
             try {
-                const data = await getBatch(batchId);
+                const data = await getBatch(batchId as string);
                 setBatchDetails(data);
-            } catch (err: any) {
-                setError(err.message);
+            } catch (err) { // FIXED: Removed 'err: any'
+                if (err instanceof Error) {
+                    setError(err.message);
+                } else {
+                    setError('An unknown error occurred during verification.');
+                }
             } finally {
                 setLoading(false);
             }
@@ -61,12 +65,12 @@ export default function VerifyPage() {
     }
 
     const statusText = error ? "Not Found" : batchDetails?.status || "Error";
-
+    
     return (
         <div className="flex items-center justify-center min-h-screen bg-gray-100 p-4">
             <div className="w-full max-w-xl bg-white p-6 sm:p-8 rounded-lg shadow-2xl border-t-8 border-blue-600">
                 <h1 className="text-3xl font-extrabold text-gray-800 mb-6 text-center">Batch Verification</h1>
-
+                
                 <div className={`p-4 rounded-lg text-center font-bold text-xl mb-6 ${getStatusStyles(statusText)}`}>
                     STATUS: {statusText.toUpperCase()}
                 </div>

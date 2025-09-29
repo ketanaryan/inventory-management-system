@@ -6,6 +6,14 @@ import { supabase } from '@/utils/supabase';
 import { QRCodeCanvas } from 'qrcode.react';
 import { User } from '@supabase/supabase-js';
 
+// Define a type for the mock alternative data
+type Alternative = {
+  name: string;
+  stock: number;
+  strength: string;
+  form: string;
+};
+
 export default function DashboardPage() {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
@@ -23,9 +31,9 @@ export default function DashboardPage() {
   const [recallBatchId, setRecallBatchId] = useState('');
   const [recallMessage, setRecallMessage] = useState('');
   
-  // Find Alternatives state
+  // Find Alternatives state - FIXED: Used defined type
   const [searchQuery, setSearchQuery] = useState('');
-  const [alternatives, setAlternatives] = useState<any[]>([]);
+  const [alternatives, setAlternatives] = useState<Alternative[]>([]);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -70,7 +78,8 @@ export default function DashboardPage() {
     }
 
     try {
-      const { data, error } = await supabase
+      // FIXED: Removed the unused 'data' variable
+      const { error } = await supabase
         .from('batches')
         .insert([
           { batch_id: batchId, medicines: medicines }
@@ -84,7 +93,8 @@ export default function DashboardPage() {
       setQrValue(verificationUrl);
       setMessage('Batch registered successfully!');
 
-    } catch (error: any) {
+    } catch (error) {
+        // FIXED: Using type-safe error handling
         if (error instanceof Error) {
             setMessage(`Error: ${error.message}`);
         } else {
@@ -97,6 +107,7 @@ export default function DashboardPage() {
       e.preventDefault();
       setRecallMessage('');
       try {
+          // FIXED: Removed the unused 'data' variable
           const { error } = await supabase
               .from('batches')
               .update({ status: 'Recalled' })
@@ -105,7 +116,7 @@ export default function DashboardPage() {
               throw new Error(error.message);
           }
           setRecallMessage('Batch recalled successfully!');
-      } catch (error) {
+      } catch (error) { // FIXED: Using type-safe error handling
           if (error instanceof Error) {
               setRecallMessage(`Error: ${error.message}`);
           } else {
