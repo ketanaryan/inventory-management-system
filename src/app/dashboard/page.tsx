@@ -121,7 +121,7 @@ export default function DashboardPage() {
               throw new Error(error.message);
           }
           setRecallMessage('Batch recalled successfully!');
-      } catch (error) { // FIX: Using type-safe error handling
+      } catch (error) { 
           if (error instanceof Error) {
               setRecallMessage(`Error: ${error.message}`);
           } else {
@@ -164,9 +164,15 @@ export default function DashboardPage() {
               ]);
           }
 
-      } catch (error: any) {
+      } catch (error) { // FIX: Using type-safe error handling
           console.error("AI Search Error:", error);
-          setAiResults({ error: error.message, generic_alternative: '', description: '' });
+          
+          let errorMessage = 'An unknown error occurred during AI search.';
+          if (error instanceof Error) {
+              errorMessage = error.message;
+          }
+
+          setAiResults({ error: errorMessage, generic_alternative: '', description: '' });
       } finally {
           setSearchLoading(false);
       }
@@ -213,7 +219,7 @@ export default function DashboardPage() {
                 id="batchId"
                 value={batchId}
                 onChange={(e) => setBatchId(e.target.value)}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm text-gray-800"
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-gray-800"
                 placeholder="e.g., DRUG-123"
                 required
               />
