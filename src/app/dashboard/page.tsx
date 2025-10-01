@@ -7,6 +7,8 @@ import { QRCodeCanvas } from 'qrcode.react';
 import { User } from '@supabase/supabase-js';
 
 // --- TYPES ---
+type Medicine = { name: string; expiryDate: string; quantity: string };
+
 type Alternative = {
   name: string;
   stock: number;
@@ -19,6 +21,14 @@ type AiResults = {
     description: string;
     error?: string;
 };
+
+// UPDATED TYPE: This must now hold the medicine array and other fetched fields
+type RecalledBatch = {
+    batch_id: string;
+    status: string;
+    medicines: Medicine[]; // Includes the detailed medicine data
+    created_at: string;
+}
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -36,7 +46,8 @@ export default function DashboardPage() {
   // Recall/Deactivate state
   const [recallBatchId, setRecallBatchId] = useState('');
   const [recallMessage, setRecallMessage] = useState('');
-  
+  const [recalledBatchInfo, setRecalledBatchInfo] = useState<RecalledBatch | null>(null); // State for confirmation
+
   // Find Alternatives state
   const [searchQuery, setSearchQuery] = useState('');
   const [alternatives, setAlternatives] = useState<Alternative[]>([]);
@@ -112,20 +123,45 @@ export default function DashboardPage() {
   const handleRecall = async (e: React.FormEvent) => {
       e.preventDefault();
       setRecallMessage('');
+      setRecalledBatchInfo(null); // Clear previous info
+      
+      if (!recallBatchId.trim()) {
+          setRecallMessage("Error: Please enter a Batch ID.");
+          return;
+      }
+      
       try {
-          const { error } = await supabase
+          // 1. Fetch the batch first to confirm existence AND get ALL details
+          const { data: currentBatch, error: fetchError } = await supabase
+              .from('batches')
+              .select('*') // CRITICAL FIX: Fetch all columns to include 'medicines'
+              .eq('batch_id', recallBatchId)
+              .single();
+
+          if (fetchError || !currentBatch) {
+              setRecallMessage(`Error: Batch ID ${recallBatchId} not found in the database.`);
+              return; 
+          }
+
+          // 2. If found, proceed to UPDATE the status
+          const { error: updateError } = await supabase
               .from('batches')
               .update({ status: 'Recalled' })
               .eq('batch_id', recallBatchId);
-          if (error) {
-              throw new Error(error.message);
+              
+          if (updateError) {
+              throw new Error(updateError.message);
           }
-          setRecallMessage('Batch recalled successfully!');
+          
+          // 3. Update UI states with confirmed status (using the fetched details)
+          setRecalledBatchInfo({ ...currentBatch, status: 'Recalled' } as RecalledBatch);
+          setRecallMessage(`Batch ${recallBatchId} successfully set to RECALLED!`);
+
       } catch (error) { 
           if (error instanceof Error) {
               setRecallMessage(`Error: ${error.message}`);
           } else {
-              setRecallMessage('An unknown error occurred.');
+              setRecallMessage('An unknown error occurred during recall.');
           }
       }
   };
@@ -137,7 +173,6 @@ export default function DashboardPage() {
       setSearchLoading(true);
 
       try {
-          // 1. Call the secure API route
           const apiResponse = await fetch('/api/drug-info', {
               method: 'POST',
               headers: {
@@ -147,7 +182,6 @@ export default function DashboardPage() {
           });
 
           if (!apiResponse.ok) {
-              // Read and report the error message from the API response
               const errorBody = await apiResponse.json();
               throw new Error(errorBody.error || 'AI service failed to provide information.');
           }
@@ -156,7 +190,6 @@ export default function DashboardPage() {
           setAiResults(data);
 
           if (data.generic_alternative) {
-              // 2. Mock alternatives based on the generic name returned by the AI
               const generic = data.generic_alternative;
               setAlternatives([
                   { name: `${generic} 500 mg Tablet`, stock: 45, strength: '500 mg', form: 'Tablet' },
@@ -164,15 +197,9 @@ export default function DashboardPage() {
               ]);
           }
 
-      } catch (error) { // FIX: Using type-safe error handling
+      } catch (error: any) {
           console.error("AI Search Error:", error);
-          
-          let errorMessage = 'An unknown error occurred during AI search.';
-          if (error instanceof Error) {
-              errorMessage = error.message;
-          }
-
-          setAiResults({ error: errorMessage, generic_alternative: '', description: '' });
+          setAiResults({ error: error.message, generic_alternative: '', description: '' });
       } finally {
           setSearchLoading(false);
       }
@@ -325,10 +352,29 @@ export default function DashboardPage() {
               >
                 Set to Recalled
               </button>
+              
+              {/* Display the error or success message */}
               {recallMessage && (
-                <div className={`mt-4 p-3 rounded-md text-center ${recallMessage.startsWith('Error') ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
+                <div className={`p-3 rounded-md text-center mb-4 mt-4 ${recallMessage.startsWith('Error') ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
                   {recallMessage}
                 </div>
+              )}
+
+              {/* NEW: Display Confirmation Status (This confirms the status) */}
+              {recalledBatchInfo && (
+                  <div className="p-4 border border-red-500 bg-red-50 rounded-lg">
+                      <h3 className="text-lg font-bold text-red-700 mb-2">Confirmed Recalled Batch</h3>
+                      <p className="text-sm text-gray-800 border-b pb-2 mb-2">Batch ID: **{recalledBatchInfo.batch_id}** | Status: **{recalledBatchInfo.status.toUpperCase()}**</p>
+                      
+                      <h4 className="text-md font-semibold text-gray-800 mb-1">Items Recalled:</h4>
+                      <ul className="list-disc list-inside text-sm text-gray-700 ml-4">
+                          {recalledBatchInfo.medicines.map((med, index) => (
+                              <li key={index}>
+                                  {med.name} (Qty: {med.quantity}) - Expires: {med.expiryDate}
+                              </li>
+                          ))}
+                      </ul>
+                  </div>
               )}
             </form>
           </div>
