@@ -6,13 +6,19 @@ import { supabase } from '@/utils/supabase';
 import { QRCodeCanvas } from 'qrcode.react';
 import { User } from '@supabase/supabase-js';
 
-// Define a type for the mock alternative data
+// --- TYPES ---
 type Alternative = {
   name: string;
   stock: number;
   strength: string;
   form: string;
 };
+
+type AiResults = {
+    generic_alternative: string;
+    description: string;
+    error?: string;
+}
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -31,9 +37,11 @@ export default function DashboardPage() {
   const [recallBatchId, setRecallBatchId] = useState('');
   const [recallMessage, setRecallMessage] = useState('');
   
-  // Find Alternatives state - FIXED: Uses defined type
+  // Find Alternatives state
   const [searchQuery, setSearchQuery] = useState('');
-  const [alternatives, setAlternatives] = useState<Alternative[]>([]); 
+  const [alternatives, setAlternatives] = useState<Alternative[]>([]);
+  const [aiResults, setAiResults] = useState<AiResults | null>(null);
+  const [searchLoading, setSearchLoading] = useState(false);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -78,8 +86,7 @@ export default function DashboardPage() {
     }
 
     try {
-      // FIXED: Removed the unused 'data' variable from destructuring
-      const { error } = await supabase 
+      const { error } = await supabase
         .from('batches')
         .insert([
           { batch_id: batchId, medicines: medicines }
@@ -106,7 +113,6 @@ export default function DashboardPage() {
       e.preventDefault();
       setRecallMessage('');
       try {
-          // FIXED: Removed the unused 'data' variable from destructuring
           const { error } = await supabase
               .from('batches')
               .update({ status: 'Recalled' })
@@ -115,7 +121,7 @@ export default function DashboardPage() {
               throw new Error(error.message);
           }
           setRecallMessage('Batch recalled successfully!');
-      } catch (error) { // FIXED: Using type-safe error handling
+      } catch (error) { 
           if (error instanceof Error) {
               setRecallMessage(`Error: ${error.message}`);
           } else {
@@ -127,21 +133,40 @@ export default function DashboardPage() {
   const handleFindAlternatives = async (e: React.FormEvent) => {
       e.preventDefault();
       setAlternatives([]);
-      const query = searchQuery.toLowerCase();
-      
-      if (query.includes('crocin') || query.includes('paracetamol')) {
-          setAlternatives([
-              { name: 'Paracetamol 500 mg tablet', stock: 50, strength: '500 mg', form: 'tablet' },
-              { name: 'Panadol 500 mg', stock: 20, strength: '500 mg', form: 'tablet' },
-              { name: 'Tylenol 500 mg', stock: 5, strength: '500 mg', form: 'tablet' },
-          ]);
-      } else if (query.includes('ibuprofen')) {
-          setAlternatives([
-              { name: 'Motrin 200 mg', stock: 35, strength: '200 mg', form: 'capsule' },
-              { name: 'Advil 200 mg', stock: 15, strength: '200 mg', form: 'tablet' },
-          ]);
-      } else {
-          setAlternatives([]);
+      setAiResults(null);
+      setSearchLoading(true);
+
+      try {
+          // 1. Call the secure API route
+          const apiResponse = await fetch('/api/drug-info', {
+              method: 'POST',
+              headers: {
+                  'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ drugName: searchQuery }),
+          });
+
+          if (!apiResponse.ok) {
+              throw new Error('AI service failed to provide information.');
+          }
+
+          const data: AiResults = await apiResponse.json();
+          setAiResults(data);
+
+          if (data.generic_alternative) {
+              // 2. Mock alternatives based on the generic name returned by the AI
+              const generic = data.generic_alternative;
+              setAlternatives([
+                  { name: `${generic} 500 mg Tablet`, stock: 45, strength: '500 mg', form: 'Tablet' },
+                  { name: `${generic} 250 mg Syrup`, stock: 10, strength: '250 mg', form: 'Syrup - (Warning: Different Form)' },
+              ]);
+          }
+
+      } catch (error: any) {
+          console.error("AI Search Error:", error);
+          setAiResults({ error: error.message, generic_alternative: '', description: '' });
+      } finally {
+          setSearchLoading(false);
       }
   };
 
@@ -324,17 +349,43 @@ export default function DashboardPage() {
               </button>
             </form>
             
-            {alternatives.length > 0 && (
-                <div className="mt-4">
-                    <h3 className="text-lg font-semibold mb-2">Available Alternatives:</h3>
-                    <ul className="divide-y divide-gray-200">
-                        {alternatives.map((alt, index) => (
-                            <li key={index} className="py-2">
-                                <p><strong>{alt.name}</strong></p>
-                                <p className="text-sm text-gray-600">Stock: {alt.stock} | Strength: {alt.strength}</p>
-                            </li>
-                        ))}
-                    </ul>
+            {searchLoading && <p className="mt-4 text-center text-blue-500">Fetching data from AI...</p>}
+            
+            {aiResults && (
+                <div className="mt-6 p-4 border border-blue-200 bg-blue-50 rounded-lg">
+                    {aiResults.error ? (
+                        <p className="text-red-600 font-semibold">{aiResults.error}</p>
+                    ) : (
+                        <>
+                            {/* FIX: Ensure description text is visible (text-gray-900) */}
+                            <h3 className="text-xl font-bold text-gray-900 mb-2">
+                                {searchQuery.toUpperCase()}
+                            </h3>
+                            <p className="text-sm italic text-gray-900 mb-3 border-b pb-2">
+                                {aiResults.description}
+                            </p>
+
+                            <h4 className="text-md font-semibold text-gray-900 mb-1">
+                                Generic Equivalent: <span className="text-green-700">{aiResults.generic_alternative}</span>
+                            </h4>
+                            
+                            {/* Display available alternatives */}
+                            {alternatives.length > 0 && (
+                                <div className="mt-4">
+                                    <h3 className="text-lg font-semibold text-gray-900 mb-2">Available Alternatives (In-Stock):</h3>
+                                    <ul className="divide-y divide-gray-200">
+                                        {alternatives.map((alt, index) => (
+                                            <li key={index} className="py-2">
+                                                <p className='text-gray-900'><strong>{alt.name}</strong></p>
+                                                {/* FIX: Ensure stock text is visible (text-gray-900) */}
+                                                <p className="text-sm text-gray-900">Stock: {alt.stock} | Strength: {alt.strength}</p>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            )}
+                        </>
+                    )}
                 </div>
             )}
           </div>
