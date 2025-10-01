@@ -18,15 +18,15 @@ export const getBatch = async (batchId: string): Promise<BatchData> => {
             .single();
 
         if (error || !data) {
-            throw new Error(`Batch verification failed. Error: ${error?.message || 'Data not found.'}`);
+            throw new Error(Batch verification failed. Error: ${error?.message || 'Data not found.'});
         }
 
         // Custom status check (Expiration Logic)
         let currentStatus = data.status;
         const now = new Date();
-        
+
         // Check if any medicine has expired
-        const isExpired = data.medicines.some((med: any) => {
+        const isExpired = data.medicines.some((med: { name: string; expiryDate: string; quantity: string }) => {
             const expiryDate = new Date(med.expiryDate);
             return expiryDate < now;
         });
@@ -37,9 +37,9 @@ export const getBatch = async (batchId: string): Promise<BatchData> => {
 
         return { ...data, status: currentStatus } as BatchData;
     } catch (error) { // The 'error' here is correctly inferred as 'unknown'
-    if (error instanceof Error) {
-        throw error;
+        if (error instanceof Error) {
+            throw error;
+        }
+        throw new Error('An unexpected error occurred during database access.');
     }
-    throw new Error('An unexpected error occurred during database access.');
-}
 };
