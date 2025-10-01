@@ -18,7 +18,7 @@ type AiResults = {
     generic_alternative: string;
     description: string;
     error?: string;
-}
+};
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -121,7 +121,7 @@ export default function DashboardPage() {
               throw new Error(error.message);
           }
           setRecallMessage('Batch recalled successfully!');
-      } catch (error) { 
+      } catch (error) { // FIX: Using type-safe error handling
           if (error instanceof Error) {
               setRecallMessage(`Error: ${error.message}`);
           } else {
@@ -147,7 +147,9 @@ export default function DashboardPage() {
           });
 
           if (!apiResponse.ok) {
-              throw new Error('AI service failed to provide information.');
+              // Read and report the error message from the API response
+              const errorBody = await apiResponse.json();
+              throw new Error(errorBody.error || 'AI service failed to provide information.');
           }
 
           const data: AiResults = await apiResponse.json();
@@ -211,7 +213,7 @@ export default function DashboardPage() {
                 id="batchId"
                 value={batchId}
                 onChange={(e) => setBatchId(e.target.value)}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-gray-800"
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm text-gray-800"
                 placeholder="e.g., DRUG-123"
                 required
               />
@@ -357,7 +359,6 @@ export default function DashboardPage() {
                         <p className="text-red-600 font-semibold">{aiResults.error}</p>
                     ) : (
                         <>
-                            {/* FIX: Ensure description text is visible (text-gray-900) */}
                             <h3 className="text-xl font-bold text-gray-900 mb-2">
                                 {searchQuery.toUpperCase()}
                             </h3>
@@ -377,7 +378,6 @@ export default function DashboardPage() {
                                         {alternatives.map((alt, index) => (
                                             <li key={index} className="py-2">
                                                 <p className='text-gray-900'><strong>{alt.name}</strong></p>
-                                                {/* FIX: Ensure stock text is visible (text-gray-900) */}
                                                 <p className="text-sm text-gray-900">Stock: {alt.stock} | Strength: {alt.strength}</p>
                                             </li>
                                         ))}
