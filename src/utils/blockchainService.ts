@@ -18,7 +18,7 @@ export const getBatch = async (batchId: string): Promise<BatchData> => {
             .single();
 
         if (error || !data) {
-            throw new Error(Batch verification failed. Error: ${error?.message || 'Data not found.'});
+            throw new Error(`Batch verification failed. Error: ${error?.message || 'Data not found.'}`);
         }
 
         // Custom status check (Expiration Logic)
