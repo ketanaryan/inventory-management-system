@@ -22,11 +22,11 @@ type AiResults = {
     error?: string;
 };
 
-// UPDATED TYPE: This must now hold the medicine array and other fetched fields
+// Type for Recalled Batch Confirmation
 type RecalledBatch = {
     batch_id: string;
     status: string;
-    medicines: Medicine[]; // Includes the detailed medicine data
+    medicines: Medicine[];
     created_at: string;
 }
 
@@ -46,7 +46,7 @@ export default function DashboardPage() {
   // Recall/Deactivate state
   const [recallBatchId, setRecallBatchId] = useState('');
   const [recallMessage, setRecallMessage] = useState('');
-  const [recalledBatchInfo, setRecalledBatchInfo] = useState<RecalledBatch | null>(null); // State for confirmation
+  const [recalledBatchInfo, setRecalledBatchInfo] = useState<RecalledBatch | null>(null); 
 
   // Find Alternatives state
   const [searchQuery, setSearchQuery] = useState('');
@@ -123,7 +123,7 @@ export default function DashboardPage() {
   const handleRecall = async (e: React.FormEvent) => {
       e.preventDefault();
       setRecallMessage('');
-      setRecalledBatchInfo(null); // Clear previous info
+      setRecalledBatchInfo(null);
       
       if (!recallBatchId.trim()) {
           setRecallMessage("Error: Please enter a Batch ID.");
@@ -134,7 +134,7 @@ export default function DashboardPage() {
           // 1. Fetch the batch first to confirm existence AND get ALL details
           const { data: currentBatch, error: fetchError } = await supabase
               .from('batches')
-              .select('*') // CRITICAL FIX: Fetch all columns to include 'medicines'
+              .select('*')
               .eq('batch_id', recallBatchId)
               .single();
 
@@ -173,6 +173,7 @@ export default function DashboardPage() {
       setSearchLoading(true);
 
       try {
+          // 1. Call the secure API route
           const apiResponse = await fetch('/api/drug-info', {
               method: 'POST',
               headers: {
@@ -190,6 +191,7 @@ export default function DashboardPage() {
           setAiResults(data);
 
           if (data.generic_alternative) {
+              // 2. Mock alternatives based on the generic name returned by the AI
               const generic = data.generic_alternative;
               setAlternatives([
                   { name: `${generic} 500 mg Tablet`, stock: 45, strength: '500 mg', form: 'Tablet' },
@@ -197,9 +199,15 @@ export default function DashboardPage() {
               ]);
           }
 
-      } catch (error: any) {
+      } catch (error) { // FIX APPLIED: Changed to type-safe catch block
           console.error("AI Search Error:", error);
-          setAiResults({ error: error.message, generic_alternative: '', description: '' });
+          
+          let errorMessage = 'An unknown error occurred during AI search.';
+          if (error instanceof Error) {
+              errorMessage = error.message;
+          }
+
+          setAiResults({ error: errorMessage, generic_alternative: '', description: '' });
       } finally {
           setSearchLoading(false);
       }
@@ -246,7 +254,7 @@ export default function DashboardPage() {
                 id="batchId"
                 value={batchId}
                 onChange={(e) => setBatchId(e.target.value)}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-gray-800"
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm text-gray-800"
                 placeholder="e.g., DRUG-123"
                 required
               />
