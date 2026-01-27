@@ -1,97 +1,143 @@
-'use client';
+"use client";
 
-import { useRouter } from 'next/navigation';
-import { useForm, SubmitHandler } from 'react-hook-form';
-import { useState } from 'react';
-import { supabase } from '@/utils/supabase';
-import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline'; // Assumes you have @heroicons/react installed
+import { useRouter } from "next/navigation";
+import { useForm, SubmitHandler } from "react-hook-form";
+import { useState } from "react";
+import { supabase } from "@/utils/supabase";
 
 type Inputs = {
   email: string;
   password: string;
+  role: "manufacturer" | "hospital" | "consumer";
 };
 
 export default function SignupPage() {
-  const { register, handleSubmit, formState: { errors } } = useForm<Inputs>();
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<Inputs>();
   const [error, setError] = useState<string | null>(null);
-  const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
 
   const onSubmit: SubmitHandler<Inputs> = async (data) => {
-    setError(null);
-    const { error } = await supabase.auth.signUp(data);
-    if (error) {
-      setError(error.message);
-    } else {
-      router.push('/dashboard');
-    }
-  };
+  setError(null);
 
-  const togglePasswordVisibility = () => {
-    setShowPassword(!showPassword);
-  };
+  const { error } = await supabase.auth.signUp({
+    email: data.email,
+    password: data.password,
+    options: {
+      data: {
+        role: data.role, // 👈 THIS WILL BE STORED
+      },
+    },
+  });
+
+  if (error) {
+    setError(error.message);
+  } else {
+    router.push("/dashboard");
+  }
+};
+
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-50">
-      <div className="p-8 bg-white rounded-xl shadow-lg border border-gray-200 w-full max-w-sm">
-        <h2 className="text-3xl font-semibold text-gray-800 text-center mb-8">
+    <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-sky-250 via-blue-300 to-indigo-450">
+      <div
+        className="
+  bg-white/95
+  backdrop-blur-xl
+  p-10
+  rounded-2xl
+  shadow-[0_25px_60px_rgba(0,0,0,0.22)]
+  border border-white/50
+  transform
+  transition-all
+  duration-300
+  hover:-translate-y-1
+  hover:shadow-[0_40px_90px_rgba(0,0,0,0.30)]
+  animate-[fadeInUp_0.6s_ease-out]
+
+"
+      >
+        <h2 className="text-3xl font-extrabold text-center mb-6 text-gray-600">
           Sign Up
         </h2>
-        {error && (
-          <div className="bg-red-100 text-red-700 text-sm py-3 px-4 rounded-md mb-6 border border-red-200">
-            {error}
-          </div>
-        )}
+
+        {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
         <form onSubmit={handleSubmit(onSubmit)}>
-          <div className="mb-5">
-            <label className="block text-gray-700 text-sm font-medium mb-2" htmlFor="email">
-              Email Address
+          <div className="mb-4">
+            <label
+              className="block text-gray-700 text-sm font-bold mb-2"
+              htmlFor="email"
+            >
+              Email
             </label>
             <input
-              className="w-full px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#00A389] focus:border-transparent transition-all duration-200"
+              className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
               id="email"
               type="email"
-              placeholder="you@example.com"
+              placeholder="Email"
               {...register("email", { required: true })}
             />
-            {errors.email && <span className="text-red-500 text-xs mt-1 block">Email is required</span>}
+            {errors.email && (
+              <span className="text-red-500 text-sm mt-1">
+                Email is required
+              </span>
+            )}
           </div>
-          <div className="mb-6 relative">
-            <label className="block text-gray-700 text-sm font-medium mb-2" htmlFor="password">
+          <div className="mb-6">
+            <label
+              className="block text-gray-700 text-sm font-bold mb-2"
+              htmlFor="password"
+            >
               Password
             </label>
             <input
-              className="w-full px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#00A389] focus:border-transparent transition-all duration-200 pr-10"
+              className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 mb-3 leading-tight focus:outline-none focus:shadow-outline"
               id="password"
-              type={showPassword ? "text" : "password"}
-              placeholder="••••••••"
+              type="password"
+              placeholder="Password"
               {...register("password", { required: true })}
             />
-            <button
-              type="button"
-              onClick={togglePasswordVisibility}
-              className="absolute inset-y-0 right-0 top-6 pr-3 flex items-center text-gray-500 hover:text-gray-700 focus:outline-none"
-            >
-              {showPassword ? (
-                <EyeSlashIcon className="h-5 w-5" />
-              ) : (
-                <EyeIcon className="h-5 w-5" />
-              )}
-            </button>
-            {errors.password && <span className="text-red-500 text-xs mt-1 block">Password is required</span>}
+            {/* ADD ROLE DROPDOWN HERE 👇 */}
+            <div className="mb-6">
+              <label className="block text-gray-700 text-sm font-bold mb-2">
+                Select Role
+              </label>
+              <select
+                className="shadow border rounded w-full py-2 px-3 text-gray-700 focus:outline-none focus:shadow-outline"
+                {...register("role", { required: true })}
+                defaultValue=""
+              >
+                <option value="" disabled>
+                  Choose your role
+                </option>
+                <option value="manufacturer">Manufacturer</option>
+                <option value="hospital">Hospital</option>
+                <option value="consumer">Consumer</option>
+              </select>
+            </div>
+            {errors.password && (
+              <span className="text-red-500 text-sm mt-1">
+                Password is required
+              </span>
+            )}
           </div>
-          <button
-            className="w-full bg-[#00A389] hover:bg-[#008F7A] text-white font-semibold py-3 px-4 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00A389] focus:ring-offset-2 transition-colors duration-200"
-            type="submit"
-          >
-            Sign Up
-          </button>
-          <p className="text-center text-gray-500 text-sm mt-6">
-            Already have an account?{' '}
-            <a className="font-medium text-[#00A389] hover:text-[#008F7A] transition-colors duration-200" href="/auth/login">
-              Log In
+          <div className="flex items-center justify-between">
+            <button
+              className="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+              type="submit"
+            >
+              Sign Up
+            </button>
+            <a
+              className="inline-block align-baseline font-bold text-sm text-gray-500 hover:text-gray-800"
+              href="/auth/login"
+            >
+              Login
             </a>
-          </p>
+          </div>
         </form>
       </div>
     </div>
