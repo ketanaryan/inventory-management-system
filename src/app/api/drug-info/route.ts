@@ -1,14 +1,31 @@
 // src/app/api/drug-info/route.ts
-import { GoogleGenerativeAI, SchemaType } from '@google/generative-ai';
+import { GoogleGenAI } from '@google/genai';
 import { NextResponse } from 'next/server';
 
-const DrugInfoSchema: { type: SchemaType.OBJECT; properties: Record<string, unknown>; required: string[] } = {
-    type: SchemaType.OBJECT,
+// Initialize Gemini (key is safely read from server environment)
+// Defined inside the route handler to avoid crash at Next.js build time
+
+// Define the schema for structured JSON output
+const DrugInfoSchema = {
+    type: "object",
     properties: {
-        description: { type: SchemaType.STRING },
-        use_cases: { type: SchemaType.ARRAY, items: { type: SchemaType.STRING } },
-        generic_alternative: { type: SchemaType.STRING },
-        warnings: { type: SchemaType.STRING }
+        description: {
+            type: "string",
+            description: "A brief, 3-sentence description of the drug."
+        },
+        use_cases: {
+            type: "array",
+            items: { type: "string" },
+            description: "List the primary conditions this drug treats."
+        },
+        generic_alternative: {
+            type: "string",
+            description: "The main generic (chemical) alternative name for the drug, e.g., 'Paracetamol'."
+        },
+        warnings: {
+            type: "string",
+            description: "One short, critical warning about the drug."
+        }
     },
     required: ["description", "use_cases", "generic_alternative", "warnings"]
 };
@@ -17,26 +34,38 @@ export async function POST(request: Request) {
     try {
         const { drugName } = await request.json();
 
-        if (!drugName) return NextResponse.json({ error: 'Drug name required' }, { status: 400 });
-        if (!process.env.GEMINI_API_KEY) return NextResponse.json({ error: 'API Key missing' }, { status: 500 });
+        if (!drugName) {
+            return NextResponse.json({ error: 'Drug name is required' }, { status: 400 });
+        }
 
-        const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-        const model = genAI.getGenerativeModel({ 
-            model: 'gemini-1.5-flash', // Note: 2.5-flash is not a standard version yet, using 1.5-flash
-            generationConfig: {
-                responseMimeType: "application/json",
+        if (!process.env.GEMINI_API_KEY) {
+            return NextResponse.json({ error: 'GEMINI_API_KEY not configured.' }, { status: 500 });
+        }
+
+        const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+
+        const prompt = `Analyze the drug '${drugName}'. Provide its description, primary uses, and its main generic alternative. Ensure the output strictly follows the provided JSON schema.`;
+
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.5-flash',
+            contents: [{ role: 'user', parts: [{ text: prompt }] }],
+            config: {
+                responseMimeType: 'application/json',
                 responseSchema: DrugInfoSchema,
             }
         });
 
-        const prompt = `Provide medical details for ${drugName} including description, use cases, main generic chemical name, and a critical warning.`;
-        const result = await model.generateContent(prompt);
-        const response = await result.response;
-        
-        return NextResponse.json(JSON.parse(response.text()));
+        // The response text will be a JSON string adhering to DrugInfoSchema
+        if (!response.text) {
+            throw new Error('No response text received from Gemini API.');
+        }
+        const jsonText = response.text.trim();
+        const drugInfo = JSON.parse(jsonText);
+
+        return NextResponse.json(drugInfo);
 
     } catch (error) {
         console.error('Gemini API Error:', error);
-        return NextResponse.json({ error: 'Failed to fetch drug data' }, { status: 500 });
+        return NextResponse.json({ error: 'Failed to fetch drug data from AI service.' }, { status: 500 });
     }
 }
