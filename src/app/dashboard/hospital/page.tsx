@@ -329,7 +329,7 @@ export default function HospitalDashboard() {
                 {verificationResult && (
                   <div className="mt-10 pt-8 border-t border-border flex flex-col items-center animate-scale-in">
                     <div className="p-4 bg-white rounded-2xl shadow-[0_0_30px_rgba(139,92,246,0.2)]">
-                      <QRCodeCanvas value={verificationResult.batch_id} size={160} fgColor="#09090b" />
+                      <QRCodeCanvas value={`${window.location.origin}/verify/${verificationResult.batch_id}`} size={160} fgColor="#09090b" />
                     </div>
                     <p className="mt-6 font-mono text-sm tracking-wider text-muted-foreground">ID: <span className="text-foreground">{verificationResult.batch_id}</span></p>
                   </div>
