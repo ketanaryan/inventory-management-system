@@ -365,7 +365,7 @@ export default function ManufacturerDashboard() {
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       return (
-        <div className="glass-panel p-3 rounded-lg border border-white/10 shadow-2xl">
+        <div className="glass-panel p-3 rounded-lg border border-border shadow-2xl">
           <p className="text-foreground font-semibold mb-1">{label}</p>
           <p className="text-primary text-sm font-medium">
             {payload[0].name}: {payload[0].value}
@@ -418,7 +418,7 @@ export default function ManufacturerDashboard() {
                       <p className="text-[10px] text-primary font-bold tracking-widest uppercase mt-0.5">Strategic Operations Node</p>
                     </div>
                  </div>
-                 <button onClick={generateInsights} disabled={loadingInsights} className="bg-primary hover:bg-primary/90 disabled:opacity-50 text-white px-6 py-3 rounded-xl font-bold shadow-[0_0_20px_rgba(139,92,246,0.3)] transition-all flex items-center gap-2 text-xs uppercase tracking-widest active:scale-[0.98]">
+                 <button onClick={generateInsights} disabled={loadingInsights} className="bg-primary hover:bg-primary/90 disabled:opacity-50 text-foreground px-6 py-3 rounded-xl font-bold shadow-[0_0_20px_rgba(139,92,246,0.3)] transition-all flex items-center gap-2 text-xs uppercase tracking-widest active:scale-[0.98]">
                    {loadingInsights ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4" />}
                    {loadingInsights ? "Analyzing..." : "Generate Insights"}
                  </button>
@@ -427,7 +427,7 @@ export default function ManufacturerDashboard() {
                <div className="space-y-3 relative z-10">
                  {insights.length > 0 ? (
                    insights.map((insight, idx) => (
-                     <div key={idx} className="p-5 rounded-2xl bg-black/40 border border-white/5 flex items-start gap-4 animate-slide-up shadow-inner" style={{ animationDelay: `${idx * 100}ms` }}>
+                     <div key={idx} className="p-5 rounded-2xl bg-card border border-border flex items-start gap-4 animate-slide-up shadow-inner" style={{ animationDelay: `${idx * 100}ms` }}>
                         <div className="w-7 h-7 rounded-full bg-primary/20 text-primary flex items-center justify-center shrink-0 border border-primary/30 text-xs font-black shadow-[0_0_10px_rgba(139,92,246,0.2)]">
                            {idx + 1}
                         </div>
@@ -435,7 +435,7 @@ export default function ManufacturerDashboard() {
                      </div>
                    ))
                  ) : (
-                   <div className="p-10 text-center text-muted-foreground border border-dashed border-white/10 rounded-2xl bg-black/20 flex flex-col items-center justify-center">
+                   <div className="p-10 text-center text-muted-foreground border border-dashed border-border rounded-2xl bg-card flex flex-col items-center justify-center">
                       <Sparkles className="w-8 h-8 opacity-20 mb-3" />
                       <span className="text-sm uppercase tracking-wider font-semibold">Nexus AI is standing by to analyze current network state.</span>
                    </div>
@@ -447,7 +447,7 @@ export default function ManufacturerDashboard() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
               <div className="glass-panel p-6 rounded-2xl flex flex-col justify-center relative overflow-hidden group">
                 <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                  <Package className="w-16 h-16 text-white" />
+                  <Package className="w-16 h-16 text-foreground" />
                 </div>
                 <p className="text-sm font-medium text-muted-foreground mb-1 uppercase tracking-wider">
                   Total Batches
@@ -721,7 +721,7 @@ export default function ManufacturerDashboard() {
                     value={batchId}
                     onChange={(e) => setBatchId(e.target.value)}
                     placeholder="e.g. BATCH-2026-NEXUS"
-                    className="w-full px-5 py-4 bg-black/20 border border-white/10 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all text-foreground placeholder:text-muted-foreground"
+                    className="w-full px-5 py-4 bg-card border border-border rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all text-foreground placeholder:text-muted-foreground"
                   />
                 </div>
 
@@ -742,13 +742,13 @@ export default function ManufacturerDashboard() {
                   {medicines.map((medicine, index) => (
                     <div
                       key={index}
-                      className="bg-black/20 p-6 rounded-xl border border-white/5 relative group transition-all hover:border-primary/30"
+                      className="bg-card p-6 rounded-xl border border-border relative group transition-all hover:border-primary/30"
                     >
                       {medicines.length > 1 && (
                         <button
                           type="button"
                           onClick={() => removeMedicineEntry(index)}
-                          className="absolute -top-3 -right-3 bg-card text-muted-foreground hover:text-red-400 border border-white/10 rounded-full p-2 shadow-xl opacity-0 group-hover:opacity-100 transition-opacity"
+                          className="absolute -top-3 -right-3 bg-card text-muted-foreground hover:text-red-400 border border-border rounded-full p-2 shadow-xl opacity-0 group-hover:opacity-100 transition-opacity"
                           title="Remove item"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -814,7 +814,7 @@ export default function ManufacturerDashboard() {
                 <div className="pt-4">
                   <button
                     type="submit"
-                    className="w-full bg-primary hover:bg-primary/90 text-white font-medium py-4 rounded-xl shadow-[0_0_20px_rgba(139,92,246,0.3)] transition-all active:scale-[0.98] tracking-wide"
+                    className="w-full bg-primary hover:bg-primary/90 text-foreground font-medium py-4 rounded-xl shadow-[0_0_20px_rgba(139,92,246,0.3)] transition-all active:scale-[0.98] tracking-wide"
                   >
                     Commit to Network
                   </button>
@@ -822,7 +822,7 @@ export default function ManufacturerDashboard() {
               </form>
 
               {qrValue && (
-                <div className="mt-12 pt-8 border-t border-white/5 flex flex-col items-center animate-slide-up">
+                <div className="mt-12 pt-8 border-t border-border flex flex-col items-center animate-slide-up">
                   <p className="text-sm font-semibold text-primary mb-6 uppercase tracking-widest">
                     Verification Artifact Generated
                   </p>
@@ -876,7 +876,7 @@ export default function ManufacturerDashboard() {
                     value={recallBatchId}
                     onChange={(e) => setRecallBatchId(e.target.value)}
                     placeholder="Enter strictly matched ID..."
-                    className="w-full px-5 py-4 bg-black/20 border border-red-500/30 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none transition-all text-foreground placeholder:text-muted-foreground"
+                    className="w-full px-5 py-4 bg-card border border-red-500/30 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none transition-all text-foreground placeholder:text-muted-foreground"
                   />
                   <div className="mt-4 p-4 bg-amber-500/10 rounded-xl border border-amber-500/20 flex items-start gap-3">
                     <AlertTriangle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
@@ -888,7 +888,7 @@ export default function ManufacturerDashboard() {
 
                 <button
                   type="submit"
-                  className="w-full bg-red-600 hover:bg-red-700 text-white font-medium py-4 rounded-xl shadow-[0_0_20px_rgba(239,68,68,0.3)] transition-all active:scale-[0.98] tracking-wide"
+                  className="w-full bg-red-600 hover:bg-red-700 text-foreground font-medium py-4 rounded-xl shadow-[0_0_20px_rgba(239,68,68,0.3)] transition-all active:scale-[0.98] tracking-wide"
                 >
                   Execute Global Recall
                 </button>
@@ -903,15 +903,15 @@ export default function ManufacturerDashboard() {
             <h2 className="text-3xl font-bold tracking-tight text-foreground mb-8">
               Ledger History
             </h2>
-            <div className="glass-panel border-white/5 rounded-2xl overflow-hidden shadow-2xl">
-              <div className="p-6 border-b border-white/5 bg-white/5 flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div className="glass-panel border-border rounded-2xl overflow-hidden shadow-2xl">
+              <div className="p-6 border-b border-border bg-white/5 flex flex-col sm:flex-row justify-between items-center gap-4">
                 <div className="relative w-full max-w-md">
                   <input
                     type="text"
                     placeholder="Search ledger entries..."
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
-                    className="w-full pl-11 pr-4 py-3 bg-black/40 border border-white/10 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent outline-none text-sm text-foreground placeholder:text-muted-foreground transition-all"
+                    className="w-full pl-11 pr-4 py-3 bg-card border border-border rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent outline-none text-sm text-foreground placeholder:text-muted-foreground transition-all"
                   />
                   <Search className="w-5 h-5 text-muted-foreground absolute left-4 top-1/2 -translate-y-1/2" />
                 </div>
@@ -919,7 +919,7 @@ export default function ManufacturerDashboard() {
 
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-sm whitespace-nowrap">
-                  <thead className="bg-black/20 border-b border-white/5 text-muted-foreground">
+                  <thead className="bg-card border-b border-border text-muted-foreground">
                     <tr>
                       <th className="px-8 py-5 font-semibold uppercase tracking-wider text-xs">Hash / ID</th>
                       <th className="px-8 py-5 font-semibold uppercase tracking-wider text-xs">Timestamp</th>
@@ -932,7 +932,7 @@ export default function ManufacturerDashboard() {
                       filteredBatches.map((batch) => (
                         <tr
                           key={batch.batch_id}
-                          className="hover:bg-white/5 transition-colors group"
+                          className="hover:bg-muted transition-colors group"
                         >
                           <td className="px-8 py-5 font-mono text-primary font-medium tracking-tight">
                             {batch.batch_id}
@@ -985,8 +985,8 @@ export default function ManufacturerDashboard() {
                <Clock className="w-8 h-8 text-amber-500" />
                Temporal Risk Analysis
             </h2>
-            <div className="glass-panel border-white/5 rounded-2xl overflow-hidden shadow-2xl">
-              <div className="p-6 border-b border-white/5 bg-amber-500/5">
+            <div className="glass-panel border-border rounded-2xl overflow-hidden shadow-2xl">
+              <div className="p-6 border-b border-border bg-amber-500/5">
                 <h3 className="text-sm font-medium text-amber-200 flex items-center gap-2">
                    <AlertTriangle className="w-4 h-4" />
                    Active compounds deteriorating within a 30-day window
@@ -995,7 +995,7 @@ export default function ManufacturerDashboard() {
 
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-sm whitespace-nowrap">
-                  <thead className="bg-black/20 border-b border-white/5 text-muted-foreground">
+                  <thead className="bg-card border-b border-border text-muted-foreground">
                     <tr>
                       <th className="px-8 py-5 font-semibold uppercase tracking-wider text-xs">Parent Node</th>
                       <th className="px-8 py-5 font-semibold uppercase tracking-wider text-xs">Substance</th>
@@ -1008,7 +1008,7 @@ export default function ManufacturerDashboard() {
                       expiringMedicines.map((med, idx) => (
                         <tr
                           key={idx}
-                          className="hover:bg-white/5 transition-colors"
+                          className="hover:bg-muted transition-colors"
                         >
                           <td className="px-8 py-5 font-mono text-primary font-medium">
                             {med.batch_id}
@@ -1060,7 +1060,7 @@ export default function ManufacturerDashboard() {
             <h2 className="text-3xl font-bold tracking-tight text-foreground mb-8">
               Verification Matrix
             </h2>
-            <div className="glass-panel border-white/5 rounded-2xl p-10 text-center flex flex-col items-center shadow-2xl relative overflow-hidden">
+            <div className="glass-panel border-border rounded-2xl p-10 text-center flex flex-col items-center shadow-2xl relative overflow-hidden">
                <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-[100px] pointer-events-none" />
 
               <p className="text-muted-foreground mb-10 max-w-lg leading-relaxed relative z-10">
@@ -1077,7 +1077,7 @@ export default function ManufacturerDashboard() {
                     value={batchId}
                     onChange={(e) => setBatchId(e.target.value)}
                     placeholder="Enter valid Node ID..."
-                    className="w-full pl-11 pr-4 py-4 bg-black/40 border border-white/10 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent outline-none text-foreground transition-all"
+                    className="w-full pl-11 pr-4 py-4 bg-card border border-border rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent outline-none text-foreground transition-all"
                   />
                   <QrCode className="w-5 h-5 text-muted-foreground absolute left-4 top-1/2 -translate-y-1/2" />
                 </div>
@@ -1096,14 +1096,14 @@ export default function ManufacturerDashboard() {
                   </div>
                   <button
                     onClick={downloadQR}
-                    className="flex items-center gap-2 bg-primary hover:bg-primary/90 text-white font-medium py-3 px-8 rounded-xl shadow-[0_0_20px_rgba(139,92,246,0.3)] transition-all active:scale-[0.98]"
+                    className="flex items-center gap-2 bg-primary hover:bg-primary/90 text-foreground font-medium py-3 px-8 rounded-xl shadow-[0_0_20px_rgba(139,92,246,0.3)] transition-all active:scale-[0.98]"
                   >
                     <Download className="w-5 h-5" />
                     Extract Vector Graphic
                   </button>
                 </div>
               ) : (
-                <div className="py-20 text-muted-foreground border-2 border-dashed border-white/5 w-full rounded-2xl relative z-10 bg-black/20">
+                <div className="py-20 text-muted-foreground border-2 border-dashed border-border w-full rounded-2xl relative z-10 bg-card">
                    <QrCode className="w-10 h-10 mx-auto mb-3 opacity-20" />
                   Awaiting spatial hash input...
                 </div>
@@ -1136,9 +1136,9 @@ export default function ManufacturerDashboard() {
       </div>
 
       {/* Sidebar */}
-      <aside className="w-72 glass border-r border-white/5 flex flex-col z-20 shrink-0 relative">
-        <div className="p-8 border-b border-white/5 flex items-center">
-          <div className="w-10 h-10 bg-gradient-to-br from-primary to-blue-600 rounded-xl flex items-center justify-center text-white font-bold mr-4 shadow-lg shadow-primary/20">
+      <aside className="w-72 glass border-r border-border flex flex-col z-20 shrink-0 relative">
+        <div className="p-8 border-b border-border flex items-center">
+          <div className="w-10 h-10 bg-gradient-to-br from-primary to-blue-600 rounded-xl flex items-center justify-center text-foreground font-bold mr-4 shadow-lg shadow-primary/20">
              <Activity className="w-5 h-5" />
           </div>
           <div>
@@ -1161,7 +1161,7 @@ export default function ManufacturerDashboard() {
                 className={`w-full flex items-center gap-4 px-4 py-3.5 text-sm font-medium rounded-xl transition-all duration-300 relative group overflow-hidden ${
                   isActive
                     ? "text-primary-foreground shadow-lg"
-                    : "text-muted-foreground hover:text-foreground hover:bg-white/5"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted"
                 }`}
               >
                 {isActive && (
@@ -1174,7 +1174,7 @@ export default function ManufacturerDashboard() {
 
                 <span
                   className={`relative z-10 transition-colors ${
-                    isActive ? "text-white" : "text-muted-foreground group-hover:text-primary"
+                    isActive ? "text-foreground" : "text-muted-foreground group-hover:text-primary"
                   }`}
                 >
                   {item.icon}
@@ -1186,7 +1186,7 @@ export default function ManufacturerDashboard() {
         </nav>
 
         {/* User Profile Footer */}
-        <div className="p-6 border-t border-white/5 bg-black/20 mt-auto">
+        <div className="p-6 border-t border-border bg-card mt-auto">
           <div className="flex items-center justify-between">
             <div className="flex flex-col">
               <span className="text-xs text-muted-foreground uppercase tracking-wider font-semibold mb-1">
@@ -1211,7 +1211,7 @@ export default function ManufacturerDashboard() {
       <div className="flex-1 flex flex-col overflow-hidden relative z-10">
         
         {/* Header */}
-        <header className="px-10 py-6 border-b border-white/5 flex justify-between items-center shrink-0 z-10 backdrop-blur-md bg-background/50 sticky top-0">
+        <header className="px-10 py-6 border-b border-border flex justify-between items-center shrink-0 z-10 backdrop-blur-md bg-background/50 sticky top-0">
           <div className="flex items-center gap-3">
              <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
              <span className="text-sm font-medium text-emerald-500 tracking-wider uppercase">System Online</span>

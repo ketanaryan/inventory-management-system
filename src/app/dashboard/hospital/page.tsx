@@ -164,9 +164,9 @@ export default function HospitalDashboard() {
       </div>
 
       {/* SIDEBAR */}
-      <aside className="w-72 glass border-r border-white/5 flex flex-col relative z-20 shrink-0">
-        <div className="p-8 border-b border-white/5 flex items-center">
-          <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-primary rounded-xl flex items-center justify-center text-white font-bold mr-4 shadow-lg shadow-blue-500/20">
+      <aside className="w-72 glass border-r border-border flex flex-col relative z-20 shrink-0">
+        <div className="p-8 border-b border-border flex items-center">
+          <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-primary rounded-xl flex items-center justify-center text-foreground font-bold mr-4 shadow-lg shadow-blue-500/20">
             <FlaskConical className="w-5 h-5" />
           </div>
           <div>
@@ -183,14 +183,14 @@ export default function HospitalDashboard() {
                 key={item.id}
                 onClick={() => setActiveTab(item.id)}
                 className={`w-full flex items-center justify-between px-4 py-3.5 rounded-xl transition-all duration-300 relative group overflow-hidden ${
-                  isActive ? "text-primary-foreground shadow-lg" : "text-muted-foreground hover:text-foreground hover:bg-white/5"
+                  isActive ? "text-primary-foreground shadow-lg" : "text-muted-foreground hover:text-foreground hover:bg-muted"
                 }`}
               >
                 {isActive && <div className="absolute inset-0 bg-primary opacity-100" />}
                 {!isActive && <div className="absolute inset-0 bg-gradient-to-r from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />}
                 
                 <div className="flex items-center gap-4 relative z-10 transition-colors"> 
-                  <span className={`${isActive ? "text-white" : "text-muted-foreground group-hover:text-primary"}`}>{item.icon}</span> 
+                  <span className={`${isActive ? "text-foreground" : "text-muted-foreground group-hover:text-primary"}`}>{item.icon}</span> 
                   <span className="tracking-wide text-sm font-medium">{item.label}</span> 
                 </div>
                 {item.count ? (
@@ -205,7 +205,7 @@ export default function HospitalDashboard() {
           })}
         </nav>
 
-        <div className="p-6 border-t border-white/5 bg-black/20">
+        <div className="p-6 border-t border-border bg-card">
           <button onClick={handleLogout} className="flex items-center gap-3 text-muted-foreground hover:text-red-400 w-full transition-colors font-medium text-sm">
             <LogOut size={18}/> Terminate Session
           </button>
@@ -214,14 +214,14 @@ export default function HospitalDashboard() {
 
       {/* MAIN CONTENT */}
       <div className="flex-1 flex flex-col relative z-10">
-        <header className="px-10 py-6 border-b border-white/5 flex justify-between items-center backdrop-blur-md bg-background/50 sticky top-0 shrink-0 z-10">
+        <header className="px-10 py-6 border-b border-border flex justify-between items-center backdrop-blur-md bg-background/50 sticky top-0 shrink-0 z-10">
           <div className="flex items-center gap-3">
              <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
              <h2 className="text-sm tracking-wider uppercase font-bold text-foreground opacity-90">{activeTab}</h2>
           </div>
           <div className="flex items-center gap-4">
             <ThemeToggle />
-            <div className="text-sm text-muted-foreground bg-black/40 border border-white/5 px-4 py-2 rounded-full font-medium">
+            <div className="text-sm text-muted-foreground bg-card border border-border px-4 py-2 rounded-full font-medium">
               Terminal User: <span className="text-foreground ml-1">{user?.email}</span>
             </div>
           </div>
@@ -259,7 +259,7 @@ export default function HospitalDashboard() {
                 </div>
                 
                 <div className="p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 relative z-10">
-                  <div className="p-5 rounded-2xl bg-black/40 border border-white/5 animate-slide-up shadow-inner">
+                  <div className="p-5 rounded-2xl bg-card border border-border animate-slide-up shadow-inner">
                      <p className="text-foreground font-semibold mb-2 flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-amber-500" /> Paracetamol IV</p>
                      <p className="text-xs text-muted-foreground uppercase tracking-wider mb-4">Consumption spike detected</p>
                      <div className="w-full bg-white/5 rounded-full h-1.5 mb-2 overflow-hidden">
@@ -267,7 +267,7 @@ export default function HospitalDashboard() {
                      </div>
                      <p className="text-[10px] text-amber-500 font-bold uppercase text-right tracking-widest">Est. Depletion: 48 Hrs</p>
                   </div>
-                  <div className="p-5 rounded-2xl bg-black/40 border border-white/5 animate-slide-up shadow-inner" style={{ animationDelay: '100ms' }}>
+                  <div className="p-5 rounded-2xl bg-card border border-border animate-slide-up shadow-inner" style={{ animationDelay: '100ms' }}>
                      <p className="text-foreground font-semibold mb-2 flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-red-500" /> Amoxicillin 500mg</p>
                      <p className="text-xs text-muted-foreground uppercase tracking-wider mb-4">Critical shortage zone</p>
                      <div className="w-full bg-white/5 rounded-full h-1.5 mb-2 overflow-hidden">
@@ -275,7 +275,7 @@ export default function HospitalDashboard() {
                      </div>
                      <p className="text-[10px] text-red-500 font-bold uppercase text-right tracking-widest">Est. Depletion: 12 Hrs</p>
                   </div>
-                  <div className="p-5 rounded-2xl bg-black/40 border border-white/5 animate-slide-up shadow-inner" style={{ animationDelay: '200ms' }}>
+                  <div className="p-5 rounded-2xl bg-card border border-border animate-slide-up shadow-inner" style={{ animationDelay: '200ms' }}>
                      <p className="text-foreground font-semibold mb-2 flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-primary" /> Saline Solution</p>
                      <p className="text-xs text-muted-foreground uppercase tracking-wider mb-4">Deviation from baseline</p>
                      <div className="w-full bg-white/5 rounded-full h-1.5 mb-2 overflow-hidden">
@@ -286,8 +286,8 @@ export default function HospitalDashboard() {
                 </div>
               </div>
 
-              <div className="glass-panel rounded-2xl border border-white/5 shadow-2xl overflow-hidden mt-8">
-                <div className="p-6 border-b border-white/5 bg-white/5 flex justify-between items-center">
+              <div className="glass-panel rounded-2xl border border-border shadow-2xl overflow-hidden mt-8">
+                <div className="p-6 border-b border-border bg-white/5 flex justify-between items-center">
                   <h3 className="font-semibold text-foreground tracking-wide uppercase text-sm">Live Inventory Stream</h3>
                   <button onClick={fetchBatches} className="text-xs font-bold text-primary hover:text-primary/80 transition-colors uppercase tracking-wider flex items-center gap-1">
                     <Activity className="w-3 h-3" /> Sync Ledger
@@ -302,7 +302,7 @@ export default function HospitalDashboard() {
           {activeTab === "Batch Verification" && (
              <div className="max-w-2xl mx-auto animate-fade-in relative z-10">
               <h2 className="text-3xl font-bold tracking-tight text-foreground mb-8 text-center">Protocol Verification</h2>
-              <div className="glass-panel p-10 rounded-3xl border border-white/5 shadow-[0_0_50px_rgba(0,0,0,0.5)] text-center relative overflow-hidden">
+              <div className="glass-panel p-10 rounded-3xl border border-border shadow-[0_0_50px_rgba(0,0,0,0.5)] text-center relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-[100px] pointer-events-none" />
                 <p className="text-muted-foreground mb-8">Query the distributed ledger to authenticate spatial payload identifiers.</p>
                 <form onSubmit={handleVerify} className="space-y-6 relative z-10">
@@ -311,9 +311,9 @@ export default function HospitalDashboard() {
                     placeholder="ENTER HASH (E.G. BATCH-2026-X)"
                     value={batchIdInput}
                     onChange={(e) => setBatchIdInput(e.target.value)}
-                    className="w-full p-4 bg-black/40 border border-white/10 rounded-xl text-center text-lg font-mono outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-foreground placeholder:text-muted-foreground transition-all uppercase tracking-widest"
+                    className="w-full p-4 bg-card border border-border rounded-xl text-center text-lg font-mono outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-foreground placeholder:text-muted-foreground transition-all uppercase tracking-widest"
                   />
-                  <button className="w-full bg-primary hover:bg-primary/90 text-white py-4 rounded-xl shadow-[0_0_20px_rgba(139,92,246,0.3)] transition-all active:scale-[0.98] tracking-wide font-medium">
+                  <button className="w-full bg-primary hover:bg-primary/90 text-foreground py-4 rounded-xl shadow-[0_0_20px_rgba(139,92,246,0.3)] transition-all active:scale-[0.98] tracking-wide font-medium">
                     Run Authenticity Check
                   </button>
                 </form>
@@ -327,7 +327,7 @@ export default function HospitalDashboard() {
                 )}
 
                 {verificationResult && (
-                  <div className="mt-10 pt-8 border-t border-white/5 flex flex-col items-center animate-scale-in">
+                  <div className="mt-10 pt-8 border-t border-border flex flex-col items-center animate-scale-in">
                     <div className="p-4 bg-white rounded-2xl shadow-[0_0_30px_rgba(139,92,246,0.2)]">
                       <QRCodeCanvas value={verificationResult.batch_id} size={160} fgColor="#09090b" />
                     </div>
@@ -340,8 +340,8 @@ export default function HospitalDashboard() {
 
           {/* 3. INVENTORY */}
           {activeTab === "Medicine Inventory" && (
-            <div className="glass-panel rounded-2xl border border-white/5 shadow-2xl overflow-hidden animate-fade-in relative z-10">
-              <div className="p-6 border-b border-white/5 bg-white/5">
+            <div className="glass-panel rounded-2xl border border-border shadow-2xl overflow-hidden animate-fade-in relative z-10">
+              <div className="p-6 border-b border-border bg-white/5">
                 <h3 className="font-semibold text-foreground tracking-wide uppercase text-sm">Complete Vault Inventory</h3>
               </div>
               <InventoryTable data={processedData.inventory} />
@@ -356,7 +356,7 @@ export default function HospitalDashboard() {
               </h2>
               <div className="grid grid-cols-1 gap-4">
                 {processedData.expiringSoon.length === 0 ? (
-                  <div className="glass-panel border border-white/5 p-16 text-center rounded-2xl text-emerald-500/70 text-sm tracking-wider uppercase">
+                  <div className="glass-panel border border-border p-16 text-center rounded-2xl text-emerald-500/70 text-sm tracking-wider uppercase">
                      <Activity className="w-8 h-8 mx-auto mb-3 opacity-50" /> System Nominal. No critical items detected.
                   </div>
                 ) : 
@@ -374,7 +374,7 @@ export default function HospitalDashboard() {
               </h2>
               <div className="grid grid-cols-1 gap-4">
                 {processedData.recalled.length === 0 ? (
-                  <div className="glass-panel border border-white/5 p-16 text-center rounded-2xl text-emerald-500/70 text-sm tracking-wider uppercase">
+                  <div className="glass-panel border border-border p-16 text-center rounded-2xl text-emerald-500/70 text-sm tracking-wider uppercase">
                      <CheckCircle className="w-8 h-8 mx-auto mb-3 opacity-50" /> Vault secure. No compromised instances.
                   </div>
                 ) : 
@@ -396,16 +396,16 @@ export default function HospitalDashboard() {
                   placeholder="Query required molecular compound (e.g. Paracetamol)"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="flex-1 p-4 bg-black/40 border border-white/10 rounded-xl text-foreground placeholder:text-muted-foreground outline-none focus:ring-2 focus:ring-primary transition-all shadow-inner"
+                  className="flex-1 p-4 bg-card border border-border rounded-xl text-foreground placeholder:text-muted-foreground outline-none focus:ring-2 focus:ring-primary transition-all shadow-inner"
                 />
-                <button className="bg-primary hover:bg-primary/90 text-white px-8 rounded-xl font-medium shadow-[0_0_20px_rgba(139,92,246,0.3)] transition-all active:scale-[0.98]">Query</button>
+                <button className="bg-primary hover:bg-primary/90 text-foreground px-8 rounded-xl font-medium shadow-[0_0_20px_rgba(139,92,246,0.3)] transition-all active:scale-[0.98]">Query</button>
               </form>
               
               <div className="grid gap-4">
                 {alternatives.map((alt, i) => (
-                  <div key={i} className="glass-panel p-6 rounded-2xl border border-white/5 flex justify-between items-center shadow-lg hover:border-primary/20 transition-all animate-slide-up" style={{ animationDelay: `${i * 50}ms` }}>
+                  <div key={i} className="glass-panel p-6 rounded-2xl border border-border flex justify-between items-center shadow-lg hover:border-primary/20 transition-all animate-slide-up" style={{ animationDelay: `${i * 50}ms` }}>
                     <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 bg-white/5 rounded-full flex items-center justify-center text-primary border border-white/5">
+                      <div className="w-10 h-10 bg-white/5 rounded-full flex items-center justify-center text-primary border border-border">
                         <FlaskConical className="w-5 h-5" />
                       </div>
                       <div>
@@ -447,7 +447,7 @@ function InventoryTable({ data }: { data: any[] }) {
     <div className="overflow-x-auto">
       <table className="w-full text-left whitespace-nowrap">
         <thead>
-          <tr className="bg-black/20 text-muted-foreground text-[10px] uppercase font-bold tracking-widest border-b border-white/5">
+          <tr className="bg-card text-muted-foreground text-[10px] uppercase font-bold tracking-widest border-b border-border">
             <th className="px-8 py-5">Substance String</th>
             <th className="px-8 py-5">Hash ID</th>
             <th className="px-8 py-5">Volume</th>
@@ -457,9 +457,9 @@ function InventoryTable({ data }: { data: any[] }) {
         </thead>
         <tbody className="divide-y divide-white/5">
           {data.length > 0 ? data.map((item, i) => (
-            <tr key={i} className="hover:bg-white/5 transition-colors group">
+            <tr key={i} className="hover:bg-muted transition-colors group">
               <td className="px-8 py-5 font-bold text-foreground capitalize flex items-center gap-3">
-                 <div className="w-6 h-6 rounded bg-white/5 flex items-center justify-center border border-white/10 group-hover:border-primary/30 transition-colors">
+                 <div className="w-6 h-6 rounded bg-white/5 flex items-center justify-center border border-border group-hover:border-primary/30 transition-colors">
                     <FlaskConical className="w-3 h-3 text-muted-foreground group-hover:text-primary transition-colors" />
                  </div>
                  {item.name}

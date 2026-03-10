@@ -261,11 +261,11 @@ export default function ConsumerDashboard() {
       <div className="absolute top-0 left-0 w-full h-[50vh] bg-gradient-to-b from-primary/10 to-transparent pointer-events-none z-0" />
 
       {/* Navigation */}
-      <nav className="border-b border-white/5 bg-background/50 backdrop-blur-md sticky top-0 z-50">
+      <nav className="border-b border-border bg-background/50 backdrop-blur-md sticky top-0 z-50">
          <div className="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
             <div className="flex items-center gap-3">
                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-purple-600 flex items-center justify-center shadow-lg shadow-primary/20">
-                  <ShieldCheck className="w-4 h-4 text-white" />
+                  <ShieldCheck className="w-4 h-4 text-foreground" />
                </div>
                <span className="font-bold text-lg tracking-tight">PharmaVerify Public</span>
             </div>
@@ -285,7 +285,7 @@ export default function ConsumerDashboard() {
          
          {/* Left Column: Verification */}
          <div className="lg:col-span-5 space-y-8">
-            <div className="glass-panel p-8 rounded-3xl border border-white/5 shadow-2xl relative overflow-hidden animate-fade-in text-center">
+            <div className="glass-panel p-8 rounded-3xl border border-border shadow-2xl relative overflow-hidden animate-fade-in text-center">
                <div className="absolute top-0 right-0 w-48 h-48 bg-primary/10 rounded-full blur-[80px] pointer-events-none" />
                
                <h2 className="text-2xl font-bold tracking-tight mb-2 relative z-10 text-foreground">Authenticate Product</h2>
@@ -298,11 +298,11 @@ export default function ConsumerDashboard() {
                       placeholder="e.g. BATCH-2026-NEXUS"
                       value={batchId}
                       onChange={(e) => setBatchId(e.target.value)}
-                      className="w-full pl-12 pr-4 py-4 bg-black/40 border border-white/10 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all text-foreground placeholder:text-muted-foreground uppercase tracking-widest font-mono text-sm"
+                      className="w-full pl-12 pr-4 py-4 bg-card border border-border rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all text-foreground placeholder:text-muted-foreground uppercase tracking-widest font-mono text-sm"
                     />
                     <Search className="w-5 h-5 text-muted-foreground absolute left-4 top-1/2 -translate-y-1/2" />
                  </div>
-                 <button className="w-full bg-primary hover:bg-primary/90 text-white font-medium py-3.5 rounded-xl shadow-[0_0_20px_rgba(139,92,246,0.3)] transition-all active:scale-[0.98] tracking-wide relative overflow-hidden group">
+                 <button className="w-full bg-primary hover:bg-primary/90 text-foreground font-medium py-3.5 rounded-xl shadow-[0_0_20px_rgba(139,92,246,0.3)] transition-all active:scale-[0.98] tracking-wide relative overflow-hidden group">
                     <span className="relative z-10">Execute Ledger Scan</span>
                     <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
                  </button>
@@ -320,7 +320,7 @@ export default function ConsumerDashboard() {
                )}
 
                {qrValue && result && (
-                  <div className="pt-6 border-t border-white/5 animate-scale-in">
+                  <div className="pt-6 border-t border-border animate-scale-in">
                      <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-4">Cryptographic Identity</p>
                      <div className="inline-block p-4 bg-white rounded-2xl shadow-[0_0_40px_rgba(139,92,246,0.15)]">
                         <QRCodeCanvas value={qrValue} size={160} fgColor="#09090b" />
@@ -342,12 +342,12 @@ export default function ConsumerDashboard() {
                </div>
             </div>
             
-            <div className="glass-panel p-2 rounded-3xl border border-white/5 shadow-2xl overflow-hidden relative group">
+            <div className="glass-panel p-2 rounded-3xl border border-border shadow-2xl overflow-hidden relative group">
                <div className="absolute inset-0 border-2 border-primary/20 rounded-3xl z-20 pointer-events-none group-hover:border-primary/40 transition-colors" />
                <div id="healthcare-map" className="w-full h-[550px] rounded-2xl z-10 bg-[#09090b]" />
                
                {/* Map overlay elements */}
-               <div className="absolute bottom-6 right-6 z-[400] bg-black/60 backdrop-blur-md border border-white/10 px-4 py-2 rounded-xl text-xs font-medium text-white flex items-center gap-2 shadow-lg">
+               <div className="absolute bottom-6 right-6 z-[400] bg-black/60 backdrop-blur-md border border-border px-4 py-2 rounded-xl text-xs font-medium text-foreground flex items-center gap-2 shadow-lg">
                   <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" /> Live Tracking Active
                </div>
             </div>
