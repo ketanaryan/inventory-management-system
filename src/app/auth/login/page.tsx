@@ -16,29 +16,23 @@ export default function LoginPage() {
   const router = useRouter();
 
   const onSubmit: SubmitHandler<Inputs> = async (data) => {
-  setError(null);
+    setError(null);
+    const { data: authData, error } = await supabase.auth.signInWithPassword(data);
 
-  const { data: authData, error } =
-    await supabase.auth.signInWithPassword(data);
+    if (error) {
+      setError(error.message);
+      return;
+    }
 
-  if (error) {
-    setError(error.message);
-    return;
-  }
-
-  const role = authData.user?.user_metadata?.role;
-
-  if (role === "manufacturer") router.push("/dashboard/manufacturer");
-  else if (role === "hospital") router.push("/dashboard/hospital");
-  else if (role === "consumer") router.push("/dashboard/consumer");
-  else router.push("/dashboard");
-};
-
-
+    const role = authData.user?.user_metadata?.role;
+    if (role === "manufacturer") router.push("/dashboard/manufacturer");
+    else if (role === "hospital") router.push("/dashboard/hospital");
+    else if (role === "consumer") router.push("/dashboard/consumer");
+    else router.push("/dashboard");
+  };
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-background text-foreground font-sans selection:bg-primary/30 relative">
-      {/* Decorative Background */}
       <div className="absolute top-0 left-0 w-full h-[50vh] bg-gradient-to-b from-primary/10 to-transparent pointer-events-none z-0" />
       <div className="absolute -top-[20%] -right-[10%] w-[50%] h-[50%] rounded-full bg-primary/10 blur-[120px] pointer-events-none z-0" />
       <div className="absolute bottom-[10%] -left-[10%] w-[40%] h-[40%] rounded-full bg-blue-500/10 blur-[120px] pointer-events-none z-0" />
@@ -51,9 +45,9 @@ export default function LoginPage() {
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-activity"><path d="M22 12h-2.48a2 2 0 0 0-1.93 1.46l-2.35 8.36a.25.25 0 0 1-.48 0L9.24 2.18a.25.25 0 0 0-.48 0l-2.35 8.36A2 2 0 0 1 4.48 12H2"/></svg>
           </div>
           <h2 className="text-3xl font-bold tracking-tight text-foreground">
-            Nexus Gateway
+            PharmaDash Login
           </h2>
-          <p className="text-sm text-muted-foreground mt-2">Enter credentials to securely connect</p>
+          <p className="text-sm text-muted-foreground mt-2">Enter your account details to access your dashboard</p>
         </div>
 
         {error && (
@@ -66,21 +60,21 @@ export default function LoginPage() {
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 relative z-10">
           <div>
             <label className="block text-sm font-medium text-muted-foreground mb-2 uppercase tracking-wider" htmlFor="email">
-              Identity Descriptor (Email)
+              Email Address
             </label>
             <input
               className="w-full px-5 py-4 bg-card border border-border rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all text-foreground placeholder:text-muted-foreground"
               id="email"
               type="email"
-              placeholder="operator@nexus.com"
+              placeholder="user@example.com"
               {...register("email", { required: true })}
             />
-            {errors.email && <span className="text-red-400 text-xs mt-2 block font-medium">Identity Descriptor is required</span>}
+            {errors.email && <span className="text-red-400 text-xs mt-2 block font-medium">Email is required</span>}
           </div>
           
           <div>
             <label className="block text-sm font-medium text-muted-foreground mb-2 uppercase tracking-wider" htmlFor="password">
-              Cryptographic Key (Password)
+              Password
             </label>
             <input
               className="w-full px-5 py-4 bg-card border border-border rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all text-foreground placeholder:text-muted-foreground"
@@ -89,21 +83,21 @@ export default function LoginPage() {
               placeholder="••••••••"
               {...register("password", { required: true })}
             />
-            {errors.password && <span className="text-red-400 text-xs mt-2 block font-medium">Cryptographic Key is required</span>}
+            {errors.password && <span className="text-red-400 text-xs mt-2 block font-medium">Password is required</span>}
           </div>
 
           <button
             className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-medium py-4 rounded-xl shadow-[0_0_20px_rgba(139,92,246,0.3)] transition-all active:scale-[0.98] tracking-wide mt-4 relative overflow-hidden group"
             type="submit"
           >
-            <span className="relative z-10">Initiate Handshake</span>
+            <span className="relative z-10">Sign In</span>
             <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
           </button>
           
           <div className="text-center mt-6">
-            <span className="text-sm text-muted-foreground">New to the network? </span>
+            <span className="text-sm text-muted-foreground">Don't have an account? </span>
             <a className="font-semibold text-primary hover:text-primary/80 transition-colors" href="/auth/signup">
-              Deploy New Node
+              Create New Account
             </a>
           </div>
         </form>
