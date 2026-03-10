@@ -14,11 +14,13 @@ export default function VerifyBatchPage() {
 
   // Automatically take batchId from URL if present
   useEffect(() => {
-    const urlParams = window.location.pathname.split('/');
-    const id = urlParams[urlParams.length - 1];
-    if (id && id !== "[batchID]" && id !== "verify") {
-      setBatchId(decodeURIComponent(id));
-      handleAutoVerify(decodeURIComponent(id));
+    if (typeof window !== "undefined") {
+      const urlParams = window.location.pathname.split('/');
+      const id = urlParams[urlParams.length - 1];
+      if (id && id !== "[batchID]" && id !== "verify") {
+        setBatchId(decodeURIComponent(id));
+        handleAutoVerify(decodeURIComponent(id));
+      }
     }
   }, []);
 
