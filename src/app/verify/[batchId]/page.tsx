@@ -178,7 +178,9 @@ export default function VerifyBatchPage() {
                       <div className="sm:text-right">
                         <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Expiry Date</p>
                         <p className="text-sm font-medium text-amber-500">
-                          {med.expiryDate || med.expiry_date || med.expiry ? new Date(med.expiryDate || med.expiry_date || med.expiry).toLocaleDateString() : "N/A"}
+                          {med.expiryDate || med.expiry_date || med.expiry 
+                            ? new Date(med.expiryDate || med.expiry_date || med.expiry).toISOString().split('T')[0]
+                            : "N/A"}
                         </p>
                       </div>
                     </div>

@@ -467,7 +467,7 @@ function InventoryTable({ data }: { data: any[] }) {
               <td className="px-8 py-5 font-mono text-xs text-primary">{item.batch_id}</td>
               <td className="px-8 py-5 text-muted-foreground font-medium">{item.quantity} units</td>
               <td className="px-8 py-5 text-sm text-muted-foreground">
-                {item.expiryDate ? new Date(item.expiryDate).toLocaleDateString() : "N/A"}
+                {item.expiryDate ? new Date(item.expiryDate).toISOString().split('T')[0] : "N/A"}
               </td>
               <td className="px-8 py-5">
                 <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border ${
@@ -511,7 +511,7 @@ function AlertCard({ item, type }: { item: any, type: 'expiry' | 'recall' }) {
         <p className={`font-black text-xl tracking-wide uppercase ${isRecall ? 'text-amber-500' : 'text-amber-500'}`}>
           {isRecall ? 'SUSPENDED' : 'DECAYING'}
         </p>
-        <p className="text-xs font-medium text-muted-foreground uppercase tracking-widest mt-1">Event: {new Date(item.expiryDate).toLocaleDateString()}</p>
+        <p className="text-xs font-medium text-muted-foreground uppercase tracking-widest mt-1">Event: {new Date(item.expiryDate).toISOString().split('T')[0]}</p>
       </div>
     </div>
   );

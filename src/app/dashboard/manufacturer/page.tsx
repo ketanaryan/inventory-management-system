@@ -272,7 +272,7 @@ export default function ManufacturerDashboard() {
   const batchesPerDay: Record<string, number> = {};
   batches.forEach((batch) => {
     if (!batch.created_at) return;
-    const date = new Date(batch.created_at).toLocaleDateString(undefined, {
+    const date = new Date(batch.created_at).toLocaleDateString("en-US", {
       month: "short",
       day: "numeric",
     });
@@ -1017,7 +1017,7 @@ export default function ManufacturerDashboard() {
                             {med.name}
                           </td>
                           <td className="px-8 py-5 text-muted-foreground">
-                            {new Date(med.expiryDate).toLocaleDateString()}
+                            {new Date(med.expiryDate).toISOString().split('T')[0]}
                           </td>
                           <td className="px-8 py-5">
                             {med.daysLeft < 0 ? (
