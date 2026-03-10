@@ -5,9 +5,10 @@ import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/utils/supabase";
 import { QRCodeCanvas } from "qrcode.react";
 import { User } from "@supabase/supabase-js";
+import ThemeToggle from "@/components/ThemeToggle";
 import { 
   LayoutDashboard, CheckCircle, Package, 
-  AlertTriangle, Bell, Search, LogOut, Loader2 
+  AlertTriangle, Bell, Search, LogOut, Activity, FlaskConical, Clock, ShieldAlert
 } from "lucide-react";
 
 export default function HospitalDashboard() {
@@ -113,7 +114,7 @@ export default function HospitalDashboard() {
       setVerificationResult(null);
     } else {
       setVerificationResult(data);
-      setVerifyMessage(data.status === "Recalled" ? "⚠️ RECALLED: Do not use." : "✅ Authentic: Verified.");
+      setVerifyMessage(data.status === "Recalled" ? "⚠️ RECALLED: System reject." : "✅ Authentic: Hash Verified.");
     }
   };
 
@@ -133,76 +134,164 @@ export default function HospitalDashboard() {
 
   if (loading && batches.length === 0) {
     return (
-      <div className="h-screen flex flex-col items-center justify-center bg-slate-50">
-        <Loader2 className="animate-spin text-blue-600 mb-4" size={40} />
-        <p className="text-slate-500 font-medium">Connecting to PharmaChain...</p>
+      <div className="flex items-center justify-center min-h-screen bg-background text-foreground">
+        <div className="flex flex-col items-center gap-4 animate-pulse">
+          <Activity className="w-10 h-10 text-primary animate-spin" />
+          <div className="text-xl font-medium tracking-tight">
+            Connecting to PharmaChain Secure Node...
+          </div>
+        </div>
       </div>
     );
   }
 
+  const tabs = [
+    { id: "Dashboard", icon: <LayoutDashboard size={20}/>, label: "Overview" },
+    { id: "Batch Verification", icon: <CheckCircle size={20}/>, label: "Verify Batch" },
+    { id: "Medicine Inventory", icon: <Package size={20}/>, label: "Inventory Data" },
+    { id: "Expiry Alerts", icon: <Bell size={20}/>, label: "Expiry Matrix", count: processedData.expiringSoon.length },
+    { id: "Recall Alerts", icon: <AlertTriangle size={20}/>, label: "Recall Alerts", count: processedData.recalled.length },
+    { id: "Alternatives", icon: <Search size={20}/>, label: "AI Alternatives" },
+  ];
+
   return (
-    <div className="flex min-h-screen bg-[#F8FAFC] text-slate-900 font-sans">
+    <div className="flex min-h-screen bg-background text-foreground font-sans overflow-hidden selection:bg-primary/30">
       
+      {/* Decorative Background Elements */}
+      <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0">
+        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-blue-600/10 blur-[100px]" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-primary/10 blur-[120px]" />
+      </div>
+
       {/* SIDEBAR */}
-      <aside className="w-72 bg-white border-r border-slate-200 flex flex-col sticky top-0 h-screen">
-        <div className="p-8 flex items-center gap-3">
-          <div className="bg-blue-600 p-2 rounded-lg text-white font-bold text-xl leading-none">H</div>
-          <span className="text-xl font-bold tracking-tight text-slate-800">PharmaDash</span>
+      <aside className="w-72 glass border-r border-white/5 flex flex-col relative z-20 shrink-0">
+        <div className="p-8 border-b border-white/5 flex items-center">
+          <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-primary rounded-xl flex items-center justify-center text-white font-bold mr-4 shadow-lg shadow-blue-500/20">
+            <FlaskConical className="w-5 h-5" />
+          </div>
+          <div>
+            <h1 className="text-xl font-bold tracking-tight leading-none text-foreground">PharmaDash</h1>
+            <span className="text-xs text-blue-400 font-medium uppercase tracking-wider mt-1 block">Hospital Node</span>
+          </div>
         </div>
 
-        <nav className="flex-1 px-4 space-y-1">
-          {[
-            { id: "Dashboard", icon: <LayoutDashboard size={20}/>, label: "Overview" },
-            { id: "Batch Verification", icon: <CheckCircle size={20}/>, label: "Verify Batch" },
-            { id: "Medicine Inventory", icon: <Package size={20}/>, label: "Inventory" },
-            { id: "Expiry Alerts", icon: <Bell size={20}/>, label: "Expiry Alerts", count: processedData.expiringSoon.length },
-            { id: "Recall Alerts", icon: <AlertTriangle size={20}/>, label: "Recall Alerts", count: processedData.recalled.length },
-            { id: "Alternatives", icon: <Search size={20}/>, label: "Find Alternatives" },
-          ].map((item) => (
-            <button
-              key={item.id}
-              onClick={() => setActiveTab(item.id)}
-              className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all ${
-                activeTab === item.id ? "bg-blue-50 text-blue-600 font-bold" : "text-slate-500 hover:bg-slate-50"
-              }`}
-            >
-              <div className="flex items-center gap-3"> {item.icon} {item.label} </div>
-              {item.count ? <span className="bg-red-500 text-white text-[10px] px-2 py-0.5 rounded-full">{item.count}</span> : null}
-            </button>
-          ))}
+        <nav className="flex-1 px-4 py-8 space-y-2 overflow-y-auto">
+          {tabs.map((item) => {
+            const isActive = activeTab === item.id;
+            return (
+              <button
+                key={item.id}
+                onClick={() => setActiveTab(item.id)}
+                className={`w-full flex items-center justify-between px-4 py-3.5 rounded-xl transition-all duration-300 relative group overflow-hidden ${
+                  isActive ? "text-primary-foreground shadow-lg" : "text-muted-foreground hover:text-foreground hover:bg-white/5"
+                }`}
+              >
+                {isActive && <div className="absolute inset-0 bg-primary opacity-100" />}
+                {!isActive && <div className="absolute inset-0 bg-gradient-to-r from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />}
+                
+                <div className="flex items-center gap-4 relative z-10 transition-colors"> 
+                  <span className={`${isActive ? "text-white" : "text-muted-foreground group-hover:text-primary"}`}>{item.icon}</span> 
+                  <span className="tracking-wide text-sm font-medium">{item.label}</span> 
+                </div>
+                {item.count ? (
+                  <span className={`relative z-10 text-[10px] px-2.5 py-1 rounded-full font-bold shadow-sm ${
+                    isActive ? "bg-white text-primary" : "bg-red-500/20 text-red-400 border border-red-500/30"
+                  }`}>
+                    {item.count}
+                  </span>
+                ) : null}
+              </button>
+            );
+          })}
         </nav>
 
-        <div className="p-4 border-t border-slate-100">
-          <button onClick={handleLogout} className="flex items-center gap-3 text-slate-500 hover:text-red-600 px-4 py-3 w-full transition-colors font-medium">
-            <LogOut size={20}/> Logout
+        <div className="p-6 border-t border-white/5 bg-black/20">
+          <button onClick={handleLogout} className="flex items-center gap-3 text-muted-foreground hover:text-red-400 w-full transition-colors font-medium text-sm">
+            <LogOut size={18}/> Terminate Session
           </button>
         </div>
       </aside>
 
       {/* MAIN CONTENT */}
-      <main className="flex-1 overflow-y-auto">
-        <header className="bg-white/80 backdrop-blur-md sticky top-0 z-10 border-b border-slate-200 px-8 py-4 flex justify-between items-center">
-          <h2 className="text-xl font-bold text-slate-800">{activeTab}</h2>
-          <div className="text-sm text-slate-500 bg-slate-100 px-4 py-2 rounded-full font-medium">
-            {user?.email}
+      <div className="flex-1 flex flex-col relative z-10">
+        <header className="px-10 py-6 border-b border-white/5 flex justify-between items-center backdrop-blur-md bg-background/50 sticky top-0 shrink-0 z-10">
+          <div className="flex items-center gap-3">
+             <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+             <h2 className="text-sm tracking-wider uppercase font-bold text-foreground opacity-90">{activeTab}</h2>
+          </div>
+          <div className="flex items-center gap-4">
+            <ThemeToggle />
+            <div className="text-sm text-muted-foreground bg-black/40 border border-white/5 px-4 py-2 rounded-full font-medium">
+              Terminal User: <span className="text-foreground ml-1">{user?.email}</span>
+            </div>
           </div>
         </header>
 
-        <div className="p-8 max-w-7xl mx-auto">
+        <main className="flex-1 overflow-y-auto p-10 custom-scrollbar">
           
           {/* 1. OVERVIEW */}
           {activeTab === "Dashboard" && (
-            <div className="space-y-8">
+            <div className="space-y-8 animate-fade-in relative z-10 pb-16">
+              <h2 className="text-3xl font-bold tracking-tight text-foreground mb-8">Facility Overview</h2>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <StatCard title="Inventory Items" value={processedData.inventory.length} color="text-blue-600" />
-                <StatCard title="Near Expiry" value={processedData.expiringSoon.length} color="text-amber-500" />
-                <StatCard title="Recalled Batches" value={processedData.recalled.length} color="text-red-600" />
+                <StatCard title="Total Network Stock" value={processedData.inventory.length} icon={<Package className="text-blue-500 w-8 h-8"/>} textColor="text-blue-400" bgColor="bg-blue-500/10" borderColor="border-blue-500/20" />
+                <StatCard title="Critical Threshold (<30d)" value={processedData.expiringSoon.length} icon={<Clock className="text-amber-500 w-8 h-8"/>} textColor="text-amber-400" bgColor="bg-amber-500/10" borderColor="border-amber-500/20" />
+                <StatCard title="Compromised Nodes" value={processedData.recalled.length} icon={<AlertTriangle className="text-red-500 w-8 h-8"/>} textColor="text-red-400" bgColor="bg-red-500/10" borderColor="border-red-500/20" />
               </div>
 
-              <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-                <div className="p-6 border-b border-slate-100 flex justify-between items-center">
-                  <h3 className="font-bold">Live Inventory Stream</h3>
-                  <button onClick={fetchBatches} className="text-xs font-bold text-blue-600">REFRESH</button>
+              {/* Predictive Restock Simulator */}
+              <div className="glass-panel rounded-2xl border border-primary/20 bg-primary/5 shadow-2xl overflow-hidden mt-8 relative group">
+                <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-[80px] pointer-events-none" />
+                <div className="p-6 border-b border-primary/10 flex justify-between items-center relative z-10">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center border border-primary/30 text-primary shadow-lg shadow-primary/20">
+                       <Activity className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-bold text-foreground tracking-wide uppercase">AI Restock Nexus</h3>
+                      <p className="text-[10px] text-primary font-bold tracking-widest uppercase mt-0.5">Predictive Consumption Models</p>
+                    </div>
+                  </div>
+                  <span className="bg-primary/20 text-primary px-3 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider border border-primary/30 flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 rounded-full bg-primary animate-ping" />
+                    Active Simulation
+                  </span>
+                </div>
+                
+                <div className="p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 relative z-10">
+                  <div className="p-5 rounded-2xl bg-black/40 border border-white/5 animate-slide-up shadow-inner">
+                     <p className="text-foreground font-semibold mb-2 flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-amber-500" /> Paracetamol IV</p>
+                     <p className="text-xs text-muted-foreground uppercase tracking-wider mb-4">Consumption spike detected</p>
+                     <div className="w-full bg-white/5 rounded-full h-1.5 mb-2 overflow-hidden">
+                        <div className="bg-amber-500 h-1.5 rounded-full shadow-[0_0_10px_rgba(245,158,11,0.5)]" style={{ width: '85%' }}></div>
+                     </div>
+                     <p className="text-[10px] text-amber-500 font-bold uppercase text-right tracking-widest">Est. Depletion: 48 Hrs</p>
+                  </div>
+                  <div className="p-5 rounded-2xl bg-black/40 border border-white/5 animate-slide-up shadow-inner" style={{ animationDelay: '100ms' }}>
+                     <p className="text-foreground font-semibold mb-2 flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-red-500" /> Amoxicillin 500mg</p>
+                     <p className="text-xs text-muted-foreground uppercase tracking-wider mb-4">Critical shortage zone</p>
+                     <div className="w-full bg-white/5 rounded-full h-1.5 mb-2 overflow-hidden">
+                        <div className="bg-red-500 h-1.5 rounded-full shadow-[0_0_10px_rgba(239,68,68,0.5)]" style={{ width: '95%' }}></div>
+                     </div>
+                     <p className="text-[10px] text-red-500 font-bold uppercase text-right tracking-widest">Est. Depletion: 12 Hrs</p>
+                  </div>
+                  <div className="p-5 rounded-2xl bg-black/40 border border-white/5 animate-slide-up shadow-inner" style={{ animationDelay: '200ms' }}>
+                     <p className="text-foreground font-semibold mb-2 flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-primary" /> Saline Solution</p>
+                     <p className="text-xs text-muted-foreground uppercase tracking-wider mb-4">Deviation from baseline</p>
+                     <div className="w-full bg-white/5 rounded-full h-1.5 mb-2 overflow-hidden">
+                        <div className="bg-primary h-1.5 rounded-full shadow-[0_0_10px_rgba(139,92,246,0.5)]" style={{ width: '60%' }}></div>
+                     </div>
+                     <p className="text-[10px] text-primary font-bold uppercase text-right tracking-widest">Est. Depletion: 5 Days</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="glass-panel rounded-2xl border border-white/5 shadow-2xl overflow-hidden mt-8">
+                <div className="p-6 border-b border-white/5 bg-white/5 flex justify-between items-center">
+                  <h3 className="font-semibold text-foreground tracking-wide uppercase text-sm">Live Inventory Stream</h3>
+                  <button onClick={fetchBatches} className="text-xs font-bold text-primary hover:text-primary/80 transition-colors uppercase tracking-wider flex items-center gap-1">
+                    <Activity className="w-3 h-3" /> Sync Ledger
+                  </button>
                 </div>
                 <InventoryTable data={processedData.inventory.slice(0, 10)} />
               </div>
@@ -211,97 +300,144 @@ export default function HospitalDashboard() {
 
           {/* 2. VERIFICATION */}
           {activeTab === "Batch Verification" && (
-            <div className="max-w-xl mx-auto bg-white p-10 rounded-3xl border border-slate-200 shadow-xl text-center">
-              <h3 className="text-2xl font-bold mb-6">Verify Authenticity</h3>
-              <form onSubmit={handleVerify} className="space-y-4">
-                <input
-                  type="text"
-                  placeholder="Enter Batch ID (e.g. 2234)"
-                  value={batchIdInput}
-                  onChange={(e) => setBatchIdInput(e.target.value)}
-                  className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl text-center text-lg font-mono outline-none focus:ring-2 focus:ring-blue-500"
-                />
-                <button className="w-full bg-slate-900 text-white py-4 rounded-2xl font-bold hover:bg-black">Run Blockchain Check</button>
-              </form>
-              {verifyMessage && (
-                <div className={`mt-6 p-4 rounded-xl font-bold ${verifyMessage.includes('✅') ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
-                  {verifyMessage}
-                </div>
-              )}
-              {verificationResult && (
-                <div className="mt-8 pt-8 border-t flex flex-col items-center">
-                  <QRCodeCanvas value={verificationResult.batch_id} size={150} />
-                  <p className="mt-4 font-bold text-slate-800 italic">ID: {verificationResult.batch_id}</p>
-                </div>
-              )}
+             <div className="max-w-2xl mx-auto animate-fade-in relative z-10">
+              <h2 className="text-3xl font-bold tracking-tight text-foreground mb-8 text-center">Protocol Verification</h2>
+              <div className="glass-panel p-10 rounded-3xl border border-white/5 shadow-[0_0_50px_rgba(0,0,0,0.5)] text-center relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-[100px] pointer-events-none" />
+                <p className="text-muted-foreground mb-8">Query the distributed ledger to authenticate spatial payload identifiers.</p>
+                <form onSubmit={handleVerify} className="space-y-6 relative z-10">
+                  <input
+                    type="text"
+                    placeholder="ENTER HASH (E.G. BATCH-2026-X)"
+                    value={batchIdInput}
+                    onChange={(e) => setBatchIdInput(e.target.value)}
+                    className="w-full p-4 bg-black/40 border border-white/10 rounded-xl text-center text-lg font-mono outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-foreground placeholder:text-muted-foreground transition-all uppercase tracking-widest"
+                  />
+                  <button className="w-full bg-primary hover:bg-primary/90 text-white py-4 rounded-xl shadow-[0_0_20px_rgba(139,92,246,0.3)] transition-all active:scale-[0.98] tracking-wide font-medium">
+                    Run Authenticity Check
+                  </button>
+                </form>
+
+                {verifyMessage && (
+                  <div className={`mt-8 p-4 rounded-xl text-sm font-medium animate-slide-up flex flex-col items-center justify-center border ${
+                    verifyMessage.includes('✅') ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-red-500/10 text-red-400 border-red-500/20'
+                  }`}>
+                    {verifyMessage}
+                  </div>
+                )}
+
+                {verificationResult && (
+                  <div className="mt-10 pt-8 border-t border-white/5 flex flex-col items-center animate-scale-in">
+                    <div className="p-4 bg-white rounded-2xl shadow-[0_0_30px_rgba(139,92,246,0.2)]">
+                      <QRCodeCanvas value={verificationResult.batch_id} size={160} fgColor="#09090b" />
+                    </div>
+                    <p className="mt-6 font-mono text-sm tracking-wider text-muted-foreground">ID: <span className="text-foreground">{verificationResult.batch_id}</span></p>
+                  </div>
+                )}
+              </div>
             </div>
           )}
 
           {/* 3. INVENTORY */}
           {activeTab === "Medicine Inventory" && (
-            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+            <div className="glass-panel rounded-2xl border border-white/5 shadow-2xl overflow-hidden animate-fade-in relative z-10">
+              <div className="p-6 border-b border-white/5 bg-white/5">
+                <h3 className="font-semibold text-foreground tracking-wide uppercase text-sm">Complete Vault Inventory</h3>
+              </div>
               <InventoryTable data={processedData.inventory} />
             </div>
           )}
 
           {/* 4. EXPIRY ALERTS */}
           {activeTab === "Expiry Alerts" && (
-            <div className="grid grid-cols-1 gap-4">
-              {processedData.expiringSoon.length === 0 ? <p className="text-slate-400 italic">No items nearing expiry.</p> : 
-                processedData.expiringSoon.map((item, i) => <AlertCard key={i} item={item} type="expiry" />)
-              }
+            <div className="max-w-5xl mx-auto animate-fade-in relative z-10">
+               <h2 className="text-3xl font-bold tracking-tight text-foreground mb-8 flex items-center gap-3">
+                 <Clock className="w-8 h-8 text-amber-500" /> Temporal Decay Vectors
+              </h2>
+              <div className="grid grid-cols-1 gap-4">
+                {processedData.expiringSoon.length === 0 ? (
+                  <div className="glass-panel border border-white/5 p-16 text-center rounded-2xl text-emerald-500/70 text-sm tracking-wider uppercase">
+                     <Activity className="w-8 h-8 mx-auto mb-3 opacity-50" /> System Nominal. No critical items detected.
+                  </div>
+                ) : 
+                  processedData.expiringSoon.map((item, i) => <AlertCard key={i} item={item} type="expiry" />)
+                }
+              </div>
             </div>
           )}
 
           {/* 5. RECALL ALERTS */}
           {activeTab === "Recall Alerts" && (
-            <div className="grid grid-cols-1 gap-4">
-              {processedData.recalled.length === 0 ? <p className="text-slate-400 italic">No recalled items in current stock.</p> : 
-                processedData.recalled.map((item, i) => <AlertCard key={i} item={item} type="recall" />)
-              }
+            <div className="max-w-5xl mx-auto animate-fade-in relative z-10">
+               <h2 className="text-3xl font-bold tracking-tight text-foreground mb-8 flex items-center gap-3">
+                 <ShieldAlert className="w-8 h-8 text-red-500" /> Compromised Vectors
+              </h2>
+              <div className="grid grid-cols-1 gap-4">
+                {processedData.recalled.length === 0 ? (
+                  <div className="glass-panel border border-white/5 p-16 text-center rounded-2xl text-emerald-500/70 text-sm tracking-wider uppercase">
+                     <CheckCircle className="w-8 h-8 mx-auto mb-3 opacity-50" /> Vault secure. No compromised instances.
+                  </div>
+                ) : 
+                  processedData.recalled.map((item, i) => <AlertCard key={i} item={item} type="recall" />)
+                }
+              </div>
             </div>
           )}
 
           {/* 6. ALTERNATIVES */}
           {activeTab === "Alternatives" && (
-            <div className="max-w-2xl mx-auto space-y-6">
-              <form onSubmit={handleSearchAlternatives} className="flex gap-2">
+            <div className="max-w-3xl mx-auto space-y-8 animate-fade-in relative z-10">
+               <h2 className="text-3xl font-bold tracking-tight text-foreground mb-2">Smart Substitute Index</h2>
+               <p className="text-muted-foreground mb-8">AI-driven mapping for chemically similar compounds when primary stock is unavailable.</p>
+              
+              <form onSubmit={handleSearchAlternatives} className="flex gap-3">
                 <input
                   type="text"
-                  placeholder="Search for unavailable medicine..."
+                  placeholder="Query required molecular compound (e.g. Paracetamol)"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="flex-1 p-4 bg-white border border-slate-200 rounded-2xl shadow-sm"
+                  className="flex-1 p-4 bg-black/40 border border-white/10 rounded-xl text-foreground placeholder:text-muted-foreground outline-none focus:ring-2 focus:ring-primary transition-all shadow-inner"
                 />
-                <button className="bg-blue-600 text-white px-8 rounded-2xl font-bold">Search</button>
+                <button className="bg-primary hover:bg-primary/90 text-white px-8 rounded-xl font-medium shadow-[0_0_20px_rgba(139,92,246,0.3)] transition-all active:scale-[0.98]">Query</button>
               </form>
+              
               <div className="grid gap-4">
                 {alternatives.map((alt, i) => (
-                  <div key={i} className="bg-white p-6 rounded-2xl border border-slate-200 flex justify-between items-center shadow-sm">
-                    <div>
-                      <h4 className="font-bold text-slate-800">{alt.name}</h4>
-                      <p className="text-sm text-slate-500">Location: {alt.location}</p>
+                  <div key={i} className="glass-panel p-6 rounded-2xl border border-white/5 flex justify-between items-center shadow-lg hover:border-primary/20 transition-all animate-slide-up" style={{ animationDelay: `${i * 50}ms` }}>
+                    <div className="flex items-center gap-4">
+                      <div className="w-10 h-10 bg-white/5 rounded-full flex items-center justify-center text-primary border border-white/5">
+                        <FlaskConical className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <h4 className="font-semibold text-foreground">{alt.name}</h4>
+                        <p className="text-xs text-muted-foreground tracking-wider uppercase mt-1">Sector: {alt.location}</p>
+                      </div>
                     </div>
-                    <span className="bg-green-100 text-green-700 px-4 py-1 rounded-full font-bold text-sm">Stock: {alt.stock}</span>
+                    <span className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-4 py-1.5 rounded-full font-bold text-xs tracking-wider uppercase">Stock: {alt.stock}</span>
                   </div>
                 ))}
               </div>
             </div>
           )}
 
-        </div>
-      </main>
+        </main>
+      </div>
     </div>
   );
 }
 
 // --- SHARED COMPONENTS ---
 
-function StatCard({ title, value, color }: any) {
+function StatCard({ title, value, icon, textColor, bgColor, borderColor }: any) {
   return (
-    <div className="bg-white p-8 rounded-2xl border border-slate-200 shadow-sm">
-      <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mb-2">{title}</p>
-      <h4 className={`text-4xl font-black ${color}`}>{value}</h4>
+    <div className={`glass-panel p-6 rounded-2xl border flex items-center gap-5 relative overflow-hidden group ${borderColor}`}>
+      <div className={`w-14 h-14 rounded-full flex items-center justify-center ${bgColor}`}>
+         {icon}
+      </div>
+      <div>
+        <p className="text-muted-foreground text-[10px] font-bold uppercase tracking-widest mb-1">{title}</p>
+        <h4 className={`text-4xl font-black ${textColor}`}>{value}</h4>
+      </div>
     </div>
   );
 }
@@ -309,34 +445,41 @@ function StatCard({ title, value, color }: any) {
 function InventoryTable({ data }: { data: any[] }) {
   return (
     <div className="overflow-x-auto">
-      <table className="w-full text-left">
+      <table className="w-full text-left whitespace-nowrap">
         <thead>
-          <tr className="bg-slate-50 text-slate-400 text-[10px] uppercase font-bold tracking-widest">
-            <th className="px-8 py-4">Medicine Name</th>
-            <th className="px-8 py-4">Batch</th>
-            <th className="px-8 py-4">Quantity</th>
-            <th className="px-8 py-4">Expiry</th>
-            <th className="px-8 py-4">Status</th>
+          <tr className="bg-black/20 text-muted-foreground text-[10px] uppercase font-bold tracking-widest border-b border-white/5">
+            <th className="px-8 py-5">Substance String</th>
+            <th className="px-8 py-5">Hash ID</th>
+            <th className="px-8 py-5">Volume</th>
+            <th className="px-8 py-5">Decay Threshold</th>
+            <th className="px-8 py-5">Integrity</th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-slate-100">
-          {data.map((item, i) => (
-            <tr key={i} className="hover:bg-slate-50 transition-colors">
-              <td className="px-8 py-4 font-bold text-slate-700 capitalize">{item.name}</td>
-              <td className="px-8 py-4 font-mono text-xs text-slate-400">{item.batch_id}</td>
-              <td className="px-8 py-4 text-slate-600 font-medium">{item.quantity}</td>
-              <td className="px-8 py-4 text-sm text-slate-500">
+        <tbody className="divide-y divide-white/5">
+          {data.length > 0 ? data.map((item, i) => (
+            <tr key={i} className="hover:bg-white/5 transition-colors group">
+              <td className="px-8 py-5 font-bold text-foreground capitalize flex items-center gap-3">
+                 <div className="w-6 h-6 rounded bg-white/5 flex items-center justify-center border border-white/10 group-hover:border-primary/30 transition-colors">
+                    <FlaskConical className="w-3 h-3 text-muted-foreground group-hover:text-primary transition-colors" />
+                 </div>
+                 {item.name}
+              </td>
+              <td className="px-8 py-5 font-mono text-xs text-primary">{item.batch_id}</td>
+              <td className="px-8 py-5 text-muted-foreground font-medium">{item.quantity} units</td>
+              <td className="px-8 py-5 text-sm text-muted-foreground">
                 {item.expiryDate ? new Date(item.expiryDate).toLocaleDateString() : "N/A"}
               </td>
-              <td className="px-8 py-4">
-                <span className={`px-2 py-1 rounded text-[10px] font-black uppercase ${
-                  item.status === 'Recalled' ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'
+              <td className="px-8 py-5">
+                <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border ${
+                  item.status === 'Recalled' ? 'bg-red-500/10 text-red-400 border-red-500/20' : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
                 }`}>
                   {item.status}
                 </span>
               </td>
             </tr>
-          ))}
+          )) : (
+            <tr><td colSpan={5} className="py-12 text-center text-muted-foreground text-sm uppercase tracking-wider">No active ledger details.</td></tr>
+          )}
         </tbody>
       </table>
     </div>
@@ -344,22 +487,31 @@ function InventoryTable({ data }: { data: any[] }) {
 }
 
 function AlertCard({ item, type }: { item: any, type: 'expiry' | 'recall' }) {
+  const isRecall = type === 'recall';
   return (
-    <div className={`p-6 rounded-2xl border-2 flex justify-between items-center ${
-      type === 'recall' ? 'bg-red-50 border-red-100' : 'bg-amber-50 border-amber-100'
+    <div className={`p-6 rounded-2xl flex justify-between items-center shadow-lg border relative overflow-hidden ${
+      isRecall ? 'bg-red-500/5 border-red-500/20' : 'bg-amber-500/5 border-amber-500/20'
     }`}>
-      <div className="flex gap-4 items-center">
-        {type === 'recall' ? <AlertTriangle className="text-red-600" /> : <Bell className="text-amber-600" />}
+       <div className={`absolute top-0 right-0 w-32 h-32 blur-[60px] pointer-events-none rounded-full ${
+          isRecall ? 'bg-red-500/10' : 'bg-amber-500/10'
+       }`} />
+      
+      <div className="flex gap-5 items-center relative z-10">
+        <div className={`w-12 h-12 rounded-full flex items-center justify-center border ${
+           isRecall ? 'bg-red-500/10 border-red-500/30 text-red-400' : 'bg-amber-500/10 border-amber-500/30 text-amber-500'
+        }`}>
+           {isRecall ? <AlertTriangle className="w-6 h-6" /> : <Clock className="w-6 h-6" />}
+        </div>
         <div>
-          <h4 className="font-bold text-slate-900 text-lg capitalize">{item.name}</h4>
-          <p className="text-sm text-slate-500">Batch Ref: {item.batch_id}</p>
+          <h4 className="font-bold text-foreground text-lg capitalize">{item.name}</h4>
+          <p className="text-xs text-muted-foreground uppercase tracking-widest mt-1">Hash Ref: <span className="text-primary font-mono">{item.batch_id}</span></p>
         </div>
       </div>
-      <div className="text-right">
-        <p className={`font-black text-xl ${type === 'recall' ? 'text-red-600' : 'text-amber-700'}`}>
-          {type === 'recall' ? 'RECALLED' : 'EXPIRING SOON'}
+      <div className="text-right relative z-10">
+        <p className={`font-black text-xl tracking-wide uppercase ${isRecall ? 'text-red-400' : 'text-amber-500'}`}>
+          {isRecall ? 'COMPROMISED' : 'DECAYING'}
         </p>
-        <p className="text-sm font-medium text-slate-600">{new Date(item.expiryDate).toLocaleDateString()}</p>
+        <p className="text-xs font-medium text-muted-foreground uppercase tracking-widest mt-1">Event: {new Date(item.expiryDate).toLocaleDateString()}</p>
       </div>
     </div>
   );

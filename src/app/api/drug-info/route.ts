@@ -3,7 +3,7 @@ import { GoogleGenAI } from '@google/genai';
 import { NextResponse } from 'next/server';
 
 // Initialize Gemini (key is safely read from server environment)
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+// Defined inside the route handler to avoid crash at Next.js build time
 
 // Define the schema for structured JSON output
 const DrugInfoSchema = {
@@ -37,6 +37,12 @@ export async function POST(request: Request) {
         if (!drugName) {
             return NextResponse.json({ error: 'Drug name is required' }, { status: 400 });
         }
+
+        if (!process.env.GEMINI_API_KEY) {
+            return NextResponse.json({ error: 'GEMINI_API_KEY not configured.' }, { status: 500 });
+        }
+
+        const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
         const prompt = `Analyze the drug '${drugName}'. Provide its description, primary uses, and its main generic alternative. Ensure the output strictly follows the provided JSON schema.`;
 
