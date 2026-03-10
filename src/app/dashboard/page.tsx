@@ -21,9 +21,9 @@ export default function DashboardPage() {
   const [qrValue, setQrValue] = useState("");
   const [message, setMessage] = useState("");
 
-  // Recall/Deactivate state
-  const [recallBatchId, setRecallBatchId] = useState("");
-  const [recallMessage, setRecallMessage] = useState("");
+  // Suspend/Deactivate state
+  const [suspendBatchId, setSuspendBatchId] = useState("");
+  const [suspendMessage, setSuspendMessage] = useState("");
 
   // Find Alternatives state
   const [searchQuery, setSearchQuery] = useState("");
@@ -278,23 +278,23 @@ useEffect(() => {
     }
   };
 
-  const handleRecall = async (e: React.FormEvent) => {
+  const handleSuspend = async (e: React.FormEvent) => {
     e.preventDefault();
-    setRecallMessage("");
+    setSuspendMessage("");
     try {
       const { error } = await supabase
         .from("batches")
-        .update({ status: "Recalled" })
-        .eq("batch_id", recallBatchId);
+        .update({ status: "Recalled" }) // Database internal value remains Recalled
+        .eq("batch_id", suspendBatchId);
       if (error) {
         throw new Error(error.message);
       }
-      setRecallMessage("Batch recalled successfully!");
+      setSuspendMessage("Batch suspended successfully for audit!");
     } catch (error) {
       if (error instanceof Error) {
-        setRecallMessage(`Error: ${error.message}`);
+        setSuspendMessage(`Error: ${error.message}`);
       } else {
-        setRecallMessage("An unknown error occurred.");
+        setSuspendMessage("An unknown error occurred.");
       }
     }
   };
@@ -389,7 +389,7 @@ useEffect(() => {
         : "bg-white text-gray-700 border"
     }`}
   >
-    Recall / Alternatives
+    Suspend / Alternatives
   </button>
 
   <button
@@ -543,24 +543,24 @@ useEffect(() => {
 
           
 
-          {/* Recall/Deactivate Form */}
+          {/* Suspend/Deactivate Form */}
           <div className="mb-8">
-            <h2 className="text-2xl font-bold text-red-600 mb-4">
-              Recall/Deactivate Batch
+            <h2 className="text-2xl font-bold text-amber-600 mb-4">
+              Suspend/Audit Batch
             </h2>
-            <form onSubmit={handleRecall}>
+            <form onSubmit={handleSuspend}>
               <div className="mb-4">
                 <label
-                  htmlFor="recallBatchId"
+                  htmlFor="suspendBatchId"
                   className="block text-sm font-medium text-gray-700"
                 >
-                  Batch ID to Recall
+                  Batch ID to Suspend
                 </label>
                 <input
                   type="text"
-                  id="recallBatchId"
-                  value={recallBatchId}
-                  onChange={(e) => setRecallBatchId(e.target.value)}
+                  id="suspendBatchId"
+                  value={suspendBatchId}
+                  onChange={(e) => setSuspendBatchId(e.target.value)}
                   className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm text-gray-800"
                   placeholder="e.g., DRUG-123"
                   required
@@ -568,15 +568,15 @@ useEffect(() => {
               </div>
               <button
                 type="submit"
-                className="w-full bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded"
+                className="w-full bg-amber-500 hover:bg-amber-600 text-white font-bold py-2 px-4 rounded"
               >
-                Set to Recalled
+                Set to Suspended
               </button>
-              {recallMessage && (
+              {suspendMessage && (
                 <div
-                  className={`mt-4 p-3 rounded-md text-center ${recallMessage.startsWith("Error") ? "bg-red-100 text-red-700" : "bg-green-100 text-green-700"}`}
+                  className={`mt-4 p-3 rounded-md text-center ${suspendMessage.startsWith("Error") ? "bg-red-100 text-red-700" : "bg-green-100 text-green-700"}`}
                 >
-                  {recallMessage}
+                  {suspendMessage}
                 </div>
               )}
             </form>

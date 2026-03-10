@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useParams } from "next/navigation";
 import { supabase } from "@/utils/supabase";
 import ThemeToggle from "@/components/ThemeToggle";
 import { ShieldCheck, ShieldAlert, Search, Activity } from "lucide-react";
@@ -12,17 +13,17 @@ export default function VerifyBatchPage() {
   const [messageType, setMessageType] = useState<"success" | "error" | "">("");
   const [loading, setLoading] = useState(false);
 
+  const params = useParams();
+  
   // Automatically take batchId from URL if present
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const urlParams = window.location.pathname.split('/');
-      const id = urlParams[urlParams.length - 1];
-      if (id && id !== "[batchID]" && id !== "verify") {
-        setBatchId(decodeURIComponent(id));
-        handleAutoVerify(decodeURIComponent(id));
-      }
+    const batchIdParam = params?.batchId as string;
+    if (batchIdParam && batchIdParam !== "%5BbatchID%5D" && batchIdParam !== "verify") {
+      const decoded = decodeURIComponent(batchIdParam);
+      setBatchId(decoded);
+      handleAutoVerify(decoded);
     }
-  }, []);
+  }, [params?.batchId]);
 
   const handleAutoVerify = async (id: string) => {
     if (!id) return;
@@ -68,7 +69,7 @@ export default function VerifyBatchPage() {
       setResult(data);
 
       if (data.status === "Recalled") {
-        setMessage("COMPROMISED BATCH - MEDICAL RECALL ACTIVE. DO NOT CONSUME.");
+        setMessage("AUDIT ALERT: This batch has been SUSPENDED for inspection. Please await clearance.");
         setMessageType("error");
       } else {
         setMessage("Authentic Product - Origin verified via blockchain trace.");
@@ -158,9 +159,9 @@ export default function VerifyBatchPage() {
                 <div className="bg-white/5 p-4 rounded-xl border border-border">
                   <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold mb-1">Status</p>
                   <p className={`font-bold text-sm uppercase tracking-wide ${
-                    result.status === "Recalled" ? "text-red-400" : "text-emerald-400"
+                    result.status === "Recalled" ? "text-amber-500" : "text-emerald-400"
                   }`}>
-                    {result.status || "Active"}
+                    {result.status === "Recalled" ? "Suspended (Audit)" : (result.status || "Active")}
                   </p>
                 </div>
               </div>

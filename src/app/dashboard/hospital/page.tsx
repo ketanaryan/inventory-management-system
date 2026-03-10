@@ -114,7 +114,7 @@ export default function HospitalDashboard() {
       setVerificationResult(null);
     } else {
       setVerificationResult(data);
-      setVerifyMessage(data.status === "Recalled" ? "⚠️ RECALLED: System reject." : "✅ Authentic: Hash Verified.");
+      setVerifyMessage(data.status === "Recalled" ? "⚠️ SUSPENDED: System Audit." : "✅ Authentic: Hash Verified.");
     }
   };
 
@@ -150,7 +150,7 @@ export default function HospitalDashboard() {
     { id: "Batch Verification", icon: <CheckCircle size={20}/>, label: "Verify Batch" },
     { id: "Medicine Inventory", icon: <Package size={20}/>, label: "Inventory Data" },
     { id: "Expiry Alerts", icon: <Bell size={20}/>, label: "Expiry Matrix", count: processedData.expiringSoon.length },
-    { id: "Recall Alerts", icon: <AlertTriangle size={20}/>, label: "Recall Alerts", count: processedData.recalled.length },
+    { id: "Suspended Alerts", icon: <AlertTriangle size={20}/>, label: "Suspended Alerts", count: processedData.recalled.length },
     { id: "Alternatives", icon: <Search size={20}/>, label: "AI Alternatives" },
   ];
 
@@ -236,7 +236,7 @@ export default function HospitalDashboard() {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <StatCard title="Total Network Stock" value={processedData.inventory.length} icon={<Package className="text-blue-500 w-8 h-8"/>} textColor="text-blue-400" bgColor="bg-blue-500/10" borderColor="border-blue-500/20" />
                 <StatCard title="Critical Threshold (<30d)" value={processedData.expiringSoon.length} icon={<Clock className="text-amber-500 w-8 h-8"/>} textColor="text-amber-400" bgColor="bg-amber-500/10" borderColor="border-amber-500/20" />
-                <StatCard title="Compromised Nodes" value={processedData.recalled.length} icon={<AlertTriangle className="text-red-500 w-8 h-8"/>} textColor="text-red-400" bgColor="bg-red-500/10" borderColor="border-red-500/20" />
+                <StatCard title="Suspended Nodes" value={processedData.recalled.length} icon={<AlertTriangle className="text-amber-500 w-8 h-8"/>} textColor="text-amber-400" bgColor="bg-amber-500/10" borderColor="border-amber-500/20" />
               </div>
 
               {/* Predictive Restock Simulator */}
@@ -366,16 +366,16 @@ export default function HospitalDashboard() {
             </div>
           )}
 
-          {/* 5. RECALL ALERTS */}
-          {activeTab === "Recall Alerts" && (
+          {/* 5. SUSPENDED ALERTS */}
+          {activeTab === "Suspended Alerts" && (
             <div className="max-w-5xl mx-auto animate-fade-in relative z-10">
                <h2 className="text-3xl font-bold tracking-tight text-foreground mb-8 flex items-center gap-3">
-                 <ShieldAlert className="w-8 h-8 text-red-500" /> Compromised Vectors
+                 <ShieldAlert className="w-8 h-8 text-amber-500" /> Pending Audit Vectors
               </h2>
               <div className="grid grid-cols-1 gap-4">
                 {processedData.recalled.length === 0 ? (
                   <div className="glass-panel border border-border p-16 text-center rounded-2xl text-emerald-500/70 text-sm tracking-wider uppercase">
-                     <CheckCircle className="w-8 h-8 mx-auto mb-3 opacity-50" /> Vault secure. No compromised instances.
+                     <CheckCircle className="w-8 h-8 mx-auto mb-3 opacity-50" /> Vault secure. No suspended instances.
                   </div>
                 ) : 
                   processedData.recalled.map((item, i) => <AlertCard key={i} item={item} type="recall" />)
@@ -471,9 +471,9 @@ function InventoryTable({ data }: { data: any[] }) {
               </td>
               <td className="px-8 py-5">
                 <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border ${
-                  item.status === 'Recalled' ? 'bg-red-500/10 text-red-400 border-red-500/20' : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                  item.status === 'Recalled' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
                 }`}>
-                  {item.status}
+                  {item.status === 'Recalled' ? 'Suspended' : item.status}
                 </span>
               </td>
             </tr>
@@ -490,15 +490,15 @@ function AlertCard({ item, type }: { item: any, type: 'expiry' | 'recall' }) {
   const isRecall = type === 'recall';
   return (
     <div className={`p-6 rounded-2xl flex justify-between items-center shadow-lg border relative overflow-hidden ${
-      isRecall ? 'bg-red-500/5 border-red-500/20' : 'bg-amber-500/5 border-amber-500/20'
+      isRecall ? 'bg-amber-500/5 border-amber-500/20' : 'bg-amber-500/5 border-amber-500/20'
     }`}>
        <div className={`absolute top-0 right-0 w-32 h-32 blur-[60px] pointer-events-none rounded-full ${
-          isRecall ? 'bg-red-500/10' : 'bg-amber-500/10'
+          isRecall ? 'bg-amber-500/10' : 'bg-amber-500/10'
        }`} />
       
       <div className="flex gap-5 items-center relative z-10">
         <div className={`w-12 h-12 rounded-full flex items-center justify-center border ${
-           isRecall ? 'bg-red-500/10 border-red-500/30 text-red-400' : 'bg-amber-500/10 border-amber-500/30 text-amber-500'
+           isRecall ? 'bg-amber-500/10 border-amber-500/30 text-amber-500' : 'bg-amber-500/10 border-amber-500/30 text-amber-500'
         }`}>
            {isRecall ? <AlertTriangle className="w-6 h-6" /> : <Clock className="w-6 h-6" />}
         </div>
@@ -508,8 +508,8 @@ function AlertCard({ item, type }: { item: any, type: 'expiry' | 'recall' }) {
         </div>
       </div>
       <div className="text-right relative z-10">
-        <p className={`font-black text-xl tracking-wide uppercase ${isRecall ? 'text-red-400' : 'text-amber-500'}`}>
-          {isRecall ? 'COMPROMISED' : 'DECAYING'}
+        <p className={`font-black text-xl tracking-wide uppercase ${isRecall ? 'text-amber-500' : 'text-amber-500'}`}>
+          {isRecall ? 'SUSPENDED' : 'DECAYING'}
         </p>
         <p className="text-xs font-medium text-muted-foreground uppercase tracking-widest mt-1">Event: {new Date(item.expiryDate).toLocaleDateString()}</p>
       </div>

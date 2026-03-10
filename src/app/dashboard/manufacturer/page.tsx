@@ -265,9 +265,9 @@ export default function ManufacturerDashboard() {
 
   const pieChartData = [
     { name: "Active", value: activeBatches },
-    { name: "Recalled", value: recalledBatches },
+    { name: "Suspended", value: recalledBatches },
   ];
-  const pieColors = ["#10b981", "#ef4444"]; // emerald-500, red-500
+  const pieColors = ["#10b981", "#f59e0b"]; // emerald-500, amber-500
 
   const batchesPerDay: Record<string, number> = {};
   batches.forEach((batch) => {
@@ -479,17 +479,17 @@ export default function ManufacturerDashboard() {
 
               <div className="glass-panel p-6 rounded-2xl flex flex-col justify-center relative overflow-hidden group">
                 <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                  <ShieldAlert className="w-16 h-16 text-red-500" />
+                  <ShieldAlert className="w-16 h-16 text-amber-500" />
                 </div>
                 <p className="text-sm font-medium text-muted-foreground mb-1 uppercase tracking-wider">
-                  Recalled
+                  Suspended Nodes
                 </p>
                 <div className="flex items-end gap-3">
-                  <h3 className="text-4xl font-bold text-red-400">
+                  <h3 className="text-4xl font-bold text-amber-400">
                     {recalledBatches}
                   </h3>
-                  <span className="text-sm text-red-500/70 mb-1">
-                    System Alerts
+                  <span className="text-sm text-amber-500/70 mb-1">
+                    System Audits
                   </span>
                 </div>
               </div>
@@ -843,15 +843,15 @@ export default function ManufacturerDashboard() {
           </div>
         );
 
-      case "Recall Batch":
+      case "Suspend Batch":
         return (
           <div className="max-w-3xl mx-auto animate-fade-in relative z-10">
             <h2 className="text-3xl font-bold tracking-tight text-foreground mb-8 flex items-center gap-3">
-              <ShieldAlert className="text-red-500 w-8 h-8" />
-              Emergency Recall Protocol
+              <ShieldAlert className="text-amber-500 w-8 h-8" />
+              Suspend Protocol (Audit)
             </h2>
-            <div className="glass-panel border-red-500/20 rounded-2xl p-8 relative overflow-hidden">
-               <div className="absolute top-0 right-0 w-64 h-64 bg-red-500/10 rounded-full blur-[100px] pointer-events-none" />
+            <div className="glass-panel border-amber-500/20 rounded-2xl p-8 relative overflow-hidden">
+               <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/10 rounded-full blur-[100px] pointer-events-none" />
 
               {recallMessage.text && (
                 <div
@@ -876,21 +876,21 @@ export default function ManufacturerDashboard() {
                     value={recallBatchId}
                     onChange={(e) => setRecallBatchId(e.target.value)}
                     placeholder="Enter strictly matched ID..."
-                    className="w-full px-5 py-4 bg-card border border-red-500/30 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none transition-all text-foreground placeholder:text-muted-foreground"
+                    className="w-full px-5 py-4 bg-card border border-amber-500/30 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none transition-all text-foreground placeholder:text-muted-foreground"
                   />
                   <div className="mt-4 p-4 bg-amber-500/10 rounded-xl border border-amber-500/20 flex items-start gap-3">
                     <AlertTriangle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
                     <p className="text-sm text-amber-200 leading-relaxed">
-                      <strong>Critical Action:</strong> This propagates a permanent compromised status across the supply chain ledger. Terminal nodes will reject this batch instantly.
+                      <strong>Audit Action:</strong> This suspends the batch across the supply chain ledger for inspection. The status will be marked for review.
                     </p>
                   </div>
                 </div>
 
                 <button
                   type="submit"
-                  className="w-full bg-red-600 hover:bg-red-700 text-foreground font-medium py-4 rounded-xl shadow-[0_0_20px_rgba(239,68,68,0.3)] transition-all active:scale-[0.98] tracking-wide"
+                  className="w-full bg-amber-600 hover:bg-amber-700 text-foreground font-medium py-4 rounded-xl shadow-[0_0_20px_rgba(245,158,11,0.3)] transition-all active:scale-[0.98] tracking-wide"
                 >
-                  Execute Global Recall
+                  Execute Global Suspension
                 </button>
               </form>
             </div>
@@ -951,12 +951,12 @@ export default function ManufacturerDashboard() {
                             <span
                               className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold tracking-wide border ${
                                 batch.status === "Recalled"
-                                  ? "bg-red-500/10 text-red-400 border-red-500/20"
+                                  ? "bg-amber-500/10 text-amber-400 border-amber-500/20"
                                   : "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
                               }`}
                             >
                               {batch.status === "Recalled" && <ShieldAlert className="w-3 h-3 mr-1.5" />}
-                              {batch.status}
+                              {batch.status === "Recalled" ? "Suspended" : batch.status}
                             </span>
                           </td>
                         </tr>
@@ -1120,7 +1120,7 @@ export default function ManufacturerDashboard() {
   const navItems = [
     { name: "Dashboard", icon: <LayoutDashboard className="w-5 h-5" /> },
     { name: "Register Batch", icon: <PlusCircle className="w-5 h-5" /> },
-    { name: "Recall Batch", icon: <ShieldAlert className="w-5 h-5" /> },
+    { name: "Suspend Batch", icon: <ShieldAlert className="w-5 h-5" /> },
     { name: "Batch History", icon: <History className="w-5 h-5" /> },
     { name: "Expiry Alerts", icon: <Clock className="w-5 h-5" /> },
     { name: "QR Tools", icon: <QrCode className="w-5 h-5" /> },
