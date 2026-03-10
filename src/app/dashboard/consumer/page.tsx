@@ -240,7 +240,7 @@ export default function ConsumerDashboard() {
     setQrValue(verificationUrl);
 
     if (data.status === "Recalled") {
-      setMessage("AUDIT ALERT: This batch has been SUSPENDED for inspection. Please await clearance.");
+      setMessage("COMPROMISED BATCH - MEDICAL RECALL ACTIVE. DO NOT CONSUME.");
       setMessageType("error");
     } else {
       setMessage("Authentic Product - Origin verified via blockchain trace.");
