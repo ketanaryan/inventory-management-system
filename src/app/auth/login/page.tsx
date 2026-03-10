@@ -72,7 +72,7 @@ export default function LoginPage() {
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-5 relative z-10">
             <div>
               <label className="block text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2" htmlFor="email">
-                Operator Email
+                Operator Emaile
               </label>
               <div className="relative">
                 <input
