@@ -1,15 +1,9 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { supabase } from "@/utils/supabase";
-import { User } from "@supabase/supabase-js";
 
-export default function HospitalDashboard() {
-  const router = useRouter();
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
-
+export default function VerifyBatchPage() {
   const [batchId, setBatchId] = useState("");
   const [result, setResult] = useState<any>(null);
   const [message, setMessage] = useState("");
@@ -17,27 +11,14 @@ export default function HospitalDashboard() {
   const [searchQuery, setSearchQuery] = useState("");
   const [alternatives, setAlternatives] = useState<any[]>([]);
 
+  // Automatically take batchId from URL if present
   useEffect(() => {
-    const fetchUser = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
-      if (!user) {
-        router.push("/auth/login");
-      } else {
-        setUser(user);
-        setLoading(false);
-      }
-    };
-
-    fetchUser();
-  }, [router]);
-
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    router.push("/auth/login");
-  };
+    const urlParams = window.location.pathname.split('/');
+    const id = urlParams[urlParams.length - 1];
+    if (id && id !== "[batchID]" && id !== "verify") {
+      setBatchId(decodeURIComponent(id));
+    }
+  }, []);
 
   const handleVerify = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -88,19 +69,11 @@ export default function HospitalDashboard() {
     }
   };
 
-  if (loading) return <div className="p-8">Loading...</div>;
-
   return (
     <div className="min-h-screen bg-gray-100 p-8 text-gray-900">
 
       <div className="flex justify-between mb-8">
-        <h1 className="text-2xl font-bold">Hospital Dashboard</h1>
-        <button
-          onClick={handleLogout}
-          className="bg-red-500 text-white px-4 py-2 rounded"
-        >
-          Logout
-        </button>
+        <h1 className="text-2xl font-bold">Verify Medicine Batch</h1>
       </div>
 
       {/* Verify Batch */}
