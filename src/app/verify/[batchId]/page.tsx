@@ -1,103 +1,165 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { useParams } from 'next/navigation';
-import { getBatch } from '@/utils/blockchainService';
+import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import { supabase } from "@/utils/supabase";
+import { User } from "@supabase/supabase-js";
 
-// Simplified types for the UI
-type Medicine = { name: string; expiryDate: string; quantity: string };
-type BatchDetails = {
-    batch_id: string;
-    medicines: Medicine[];
-    status: string;
-    created_at: string;
-};
+export default function HospitalDashboard() {
+  const router = useRouter();
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
 
-const getStatusStyles = (status: string) => {
-    switch (status) {
-        case 'Authentic':
-            return 'bg-green-500 text-white';
-        case 'Recalled':
-            return 'bg-red-600 text-white';
-        case 'Expired':
-            return 'bg-yellow-500 text-gray-900';
-        case 'Not Found':
-            return 'bg-gray-400 text-white';
-        default:
-            return 'bg-blue-500 text-white';
+  const [batchId, setBatchId] = useState("");
+  const [result, setResult] = useState<any>(null);
+  const [message, setMessage] = useState("");
+
+  const [searchQuery, setSearchQuery] = useState("");
+  const [alternatives, setAlternatives] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) {
+        router.push("/auth/login");
+      } else {
+        setUser(user);
+        setLoading(false);
+      }
+    };
+
+    fetchUser();
+  }, [router]);
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    router.push("/auth/login");
+  };
+
+  const handleVerify = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setMessage("");
+    setResult(null);
+
+    try {
+      const { data, error } = await supabase
+        .from("batches")
+        .select("*")
+        .eq("batch_id", batchId)
+        .single();
+
+      if (error || !data) {
+        setMessage("Batch not found — possible counterfeit.");
+        return;
+      }
+
+      setResult(data);
+
+      if (data.status === "Recalled") {
+        setMessage("⚠ Batch is recalled — do not use.");
+      } else {
+        setMessage("✅ Batch is authentic.");
+      }
+    } catch (err) {
+      setMessage("Error verifying batch.");
     }
-};
+  };
 
-export default function VerifyPage() {
-    const params = useParams();
-    const batchId = Array.isArray(params.batchId) ? params.batchId[0] : params.batchId;
+  const handleFindAlternatives = (e: React.FormEvent) => {
+    e.preventDefault();
+    setAlternatives([]);
 
-    const [batchDetails, setBatchDetails] = useState<BatchDetails | null>(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+    const query = searchQuery.toLowerCase();
 
-    useEffect(() => {
-        if (!batchId) return;
-        
-        const fetchBatch = async () => {
-            try {
-                const data = await getBatch(batchId as string);
-                setBatchDetails(data);
-            } catch (err) { // FIXED: Using type-safe error handling
-                if (err instanceof Error) {
-                    setError(err.message);
-                } else {
-                    setError('An unknown error occurred during verification.');
-                }
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetchBatch();
-    }, [batchId]);
-
-    if (loading) {
-        return (
-            <div className="flex items-center justify-center min-h-screen">
-                <div className="text-xl text-gray-600">Verifying batch status...</div>
-            </div>
-        );
+    if (query.includes("crocin") || query.includes("paracetamol")) {
+      setAlternatives([
+        { name: "Paracetamol 500 mg tablet", stock: 50 },
+        { name: "Panadol 500 mg", stock: 20 },
+        { name: "Tylenol 500 mg", stock: 5 },
+      ]);
+    } else if (query.includes("ibuprofen")) {
+      setAlternatives([
+        { name: "Motrin 200 mg", stock: 35 },
+        { name: "Advil 200 mg", stock: 15 },
+      ]);
     }
+  };
 
-    const statusText = error ? "Not Found" : batchDetails?.status || "Error";
-    
-    return (
-        <div className="flex items-center justify-center min-h-screen bg-gray-100 p-4">
-            <div className="w-full max-w-xl bg-white p-6 sm:p-8 rounded-lg shadow-2xl border-t-8 border-blue-600">
-                <h1 className="text-3xl font-extrabold text-gray-800 mb-6 text-center">Batch Verification</h1>
-                
-                <div className={`p-4 rounded-lg text-center font-bold text-xl mb-6 ${getStatusStyles(statusText)}`}>
-                    STATUS: {statusText.toUpperCase()}
-                </div>
+  if (loading) return <div className="p-8">Loading...</div>;
 
-                <h2 className="text-xl font-semibold text-gray-700 mb-4">Batch ID: {batchId}</h2>
+  return (
+    <div className="min-h-screen bg-gray-100 p-8 text-gray-900">
 
-                {error ? (
-                    <p className="text-red-500">{error}</p>
-                ) : (
-                    <div>
-                        <div className="mb-4 text-sm text-gray-500">
-                            Registered on: {new Date(batchDetails?.created_at || '').toLocaleDateString()}
-                        </div>
+      <div className="flex justify-between mb-8">
+        <h1 className="text-2xl font-bold">Hospital Dashboard</h1>
+        <button
+          onClick={handleLogout}
+          className="bg-red-500 text-white px-4 py-2 rounded"
+        >
+          Logout
+        </button>
+      </div>
 
-                        <h3 className="text-lg font-bold text-gray-800 mb-2 border-b pb-1">Medicine Details</h3>
-                        <ul className="divide-y divide-gray-200">
-                            {batchDetails?.medicines?.map((med, index) => (
-                                <li key={index} className="py-2">
-                                    <p className="font-medium text-gray-900">{med.name}</p>
-                                    <p className="text-sm text-gray-600">Quantity: {med.quantity}</p>
-                                    <p className="text-sm text-red-500">Expires: {med.expiryDate}</p>
-                                </li>
-                            ))}
-                        </ul>
-                    </div>
-                )}
-            </div>
-        </div>
-    );
+      {/* Verify Batch */}
+      <div className="bg-white p-6 rounded shadow mb-8">
+        <h2 className="text-xl font-bold mb-4">Verify Batch</h2>
+
+        <form onSubmit={handleVerify}>
+          <input
+            type="text"
+            placeholder="Enter scanned batch ID"
+            value={batchId}
+            onChange={(e) => setBatchId(e.target.value)}
+            className="w-full p-2 border rounded mb-4"
+          />
+
+          <button className="bg-blue-500 text-white px-4 py-2 rounded">
+            Verify
+          </button>
+        </form>
+
+        {message && <p className="mt-4">{message}</p>}
+
+        {result && (
+          <div className="mt-4">
+            <p><b>Batch ID:</b> {result.batch_id}</p>
+            <p><b>Status:</b> {result.status || "Active"}</p>
+          </div>
+        )}
+      </div>
+
+      {/* Alternatives */}
+      <div className="bg-white p-6 rounded shadow">
+        <h2 className="text-xl font-bold mb-4">Find Alternatives</h2>
+
+        <form onSubmit={handleFindAlternatives}>
+          <input
+            type="text"
+            placeholder="Search medicine"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full p-2 border rounded mb-4"
+          />
+
+          <button className="bg-yellow-500 text-white px-4 py-2 rounded">
+            Search
+          </button>
+        </form>
+
+        {alternatives.length > 0 && (
+          <ul className="mt-4">
+            {alternatives.map((alt, i) => (
+              <li key={i}>
+                {alt.name} — Stock: {alt.stock}
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+
+    </div>
+  );
 }
