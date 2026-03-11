@@ -36,18 +36,41 @@ export default function HospitalDashboard() {
         router.push("/auth/login");
       } else {
         setUser(user);
-        fetchBatches();
+        fetchBatches(user.id);
       }
     };
     checkUser();
   }, [router]);
 
-  // 2. Fetch Live Entries from your Supabase 'batches' table
-  const fetchBatches = async () => {
+  // 2. Fetch User's Scanned Entries and map to 'batches'
+  const fetchBatches = async (userIdStr?: string) => {
     setLoading(true);
+    const idToUse = userIdStr || user?.id;
+
+    if (!idToUse) {
+      setLoading(false);
+      return;
+    }
+
+    // 1. Fetch user's scans
+    const { data: scans, error: scanError } = await supabase
+      .from("user_scans")
+      .select("batch_id")
+      .eq("user_id", idToUse)
+      .order("scanned_at", { ascending: false });
+
+    if (scanError || !scans || scans.length === 0) {
+      setBatches([]);
+      setLoading(false);
+      return;
+    }
+
+    // 2. Fetch actual batch details
+    const batchIds = scans.map(s => s.batch_id);
     const { data, error } = await supabase
       .from("batches")
       .select("*")
+      .in("batch_id", batchIds)
       .order("created_at", { ascending: false });
 
     if (!error && data) {
@@ -116,8 +139,12 @@ export default function HospitalDashboard() {
       setVerifyMessage("❌ Counterfeit Alert: Batch ID not found.");
       setVerificationResult(null);
     } else {
+      // It exists, insert into hospital's scanned inventory (user_scans)
+      await supabase.from("user_scans").insert([{ user_id: user?.id, batch_id: batchIdInput }]);
+      fetchBatches(user?.id);
+
       setVerificationResult(data);
-      setVerifyMessage(data.status === "Recalled" ? "⚠️ RECALLED: System reject." : "✅ Authentic: Hash Verified.");
+      setVerifyMessage(data.status === "Recalled" ? "⚠️ RECALLED: System reject." : "✅ Authentic: Hash Verified & Added to Vault.");
     }
   };
 
@@ -295,8 +322,8 @@ export default function HospitalDashboard() {
 
               <div className="glass-panel rounded-2xl border border-border shadow-2xl overflow-hidden mt-8">
                 <div className="p-6 border-b border-border bg-white/5 flex justify-between items-center">
-                  <h3 className="font-semibold text-foreground tracking-wide uppercase text-sm">Live Inventory Stream</h3>
-                  <button onClick={fetchBatches} className="text-xs font-bold text-primary hover:text-primary/80 transition-colors uppercase tracking-wider flex items-center gap-1">
+                  <h3 className="font-semibold text-foreground tracking-wide uppercase text-sm">Live Vault Stock</h3>
+                  <button onClick={() => fetchBatches(user?.id)} className="text-xs font-bold text-primary hover:text-primary/80 transition-colors uppercase tracking-wider flex items-center gap-1">
                     <Activity className="w-3 h-3" /> Sync Ledger
                   </button>
                 </div>
