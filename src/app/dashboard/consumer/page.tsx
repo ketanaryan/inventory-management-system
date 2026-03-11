@@ -174,6 +174,20 @@ export default function ConsumerDashboard() {
           iconAnchor: [8, 8]
         });
 
+        // Distance calculation function
+        const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
+          const R = 6371; // Radius of the earth in km
+          const dLat = (lat2 - lat1) * Math.PI / 180;
+          const dLon = (lon2 - lon1) * Math.PI / 180;
+          const a = 
+            Math.sin(dLat/2) * Math.sin(dLat/2) +
+            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+            Math.sin(dLon/2) * Math.sin(dLon/2); 
+          const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
+          const d = R * c; // Distance in km
+          return d;
+        };
+
         if (data.elements && data.elements.length > 0) {
            data.elements.forEach((element: any) => {
              const hLat = element.lat || element.center?.lat;
@@ -181,8 +195,9 @@ export default function ConsumerDashboard() {
              const name = element.tags?.name || "Unknown Hospital/Clinic";
              
              if (hLat && hLon) {
+               const distance = calculateDistance(lat, lng, hLat, hLon).toFixed(1);
                L.marker([hLat, hLon], { icon: hospitalIcon }).addTo(map)
-                 .bindPopup(`<b>${name}</b><br>Verified Facility`);
+                 .bindPopup(`<b>${name}</b><br>Distance: ${distance} km<br>Verified Facility`);
              }
            });
         } else {

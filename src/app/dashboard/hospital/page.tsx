@@ -10,6 +10,7 @@ import {
   LayoutDashboard, CheckCircle, Package, 
   AlertTriangle, Bell, Search, LogOut, Activity, FlaskConical, Clock, ShieldAlert
 } from "lucide-react";
+import { getMedicineAlternatives } from "@/app/actions/getMedicineAlternatives";
 
 export default function HospitalDashboard() {
   const router = useRouter();
@@ -23,7 +24,9 @@ export default function HospitalDashboard() {
   const [verificationResult, setVerificationResult] = useState<any>(null);
   const [verifyMessage, setVerifyMessage] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
-  const [alternatives, setAlternatives] = useState<any[]>([]);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiResult, setAiResult] = useState<any>(null);
+  const [aiError, setAiError] = useState("");
 
   // 1. Authentication & Initial Data Fetch
   useEffect(() => {
@@ -118,17 +121,19 @@ export default function HospitalDashboard() {
     }
   };
 
-  const handleSearchAlternatives = (e: React.FormEvent) => {
+  const handleSearchAlternatives = async (e: React.FormEvent) => {
     e.preventDefault();
-    const query = searchQuery.toLowerCase();
-    // Example Mock Logic: In a real app, you'd query a 'medicines' table
-    if (query.includes("paracetamol") || query.includes("dolo")) {
-      setAlternatives([
-        { name: "Crocin 500mg", stock: 120, location: "Aisle 4" },
-        { name: "Tylenol", stock: 15, location: "Aisle 2" }
-      ]);
-    } else {
-      setAlternatives([]);
+    if(!searchQuery.trim()) return;
+    setAiLoading(true);
+    setAiError("");
+    setAiResult(null);
+    try {
+      const result = await getMedicineAlternatives(searchQuery);
+      setAiResult(result);
+    } catch (err) {
+      setAiError(err instanceof Error ? err.message : "Failed to find alternatives");
+    } finally {
+      setAiLoading(false);
     }
   };
 
@@ -400,25 +405,71 @@ export default function HospitalDashboard() {
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="flex-1 p-4 bg-card border border-border rounded-xl text-foreground placeholder:text-muted-foreground outline-none focus:ring-2 focus:ring-primary transition-all shadow-inner"
                 />
-                <button className="bg-primary hover:bg-primary/90 text-foreground px-8 rounded-xl font-medium shadow-[0_0_20px_rgba(139,92,246,0.3)] transition-all active:scale-[0.98]">Query</button>
+                <button disabled={aiLoading} className="bg-primary hover:bg-primary/90 disabled:opacity-50 text-foreground px-8 rounded-xl font-medium shadow-[0_0_20px_rgba(139,92,246,0.3)] transition-all active:scale-[0.98] flex items-center gap-2">
+                   {aiLoading ? <span className="animate-spin w-4 h-4 border-2 border-white/30 border-t-white rounded-full"></span> : <Search size={16} />} 
+                   {aiLoading ? "Querying..." : "Query"}
+                </button>
               </form>
               
-              <div className="grid gap-4">
-                {alternatives.map((alt, i) => (
-                  <div key={i} className="glass-panel p-6 rounded-2xl border border-border flex justify-between items-center shadow-lg hover:border-primary/20 transition-all animate-slide-up" style={{ animationDelay: `${i * 50}ms` }}>
-                    <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 bg-white/5 rounded-full flex items-center justify-center text-primary border border-border">
-                        <FlaskConical className="w-5 h-5" />
-                      </div>
-                      <div>
-                        <h4 className="font-semibold text-foreground">{alt.name}</h4>
-                        <p className="text-xs text-muted-foreground tracking-wider uppercase mt-1">Sector: {alt.location}</p>
+              {aiError && (
+                <div className="p-4 rounded-xl text-xs font-bold mb-6 flex items-start gap-3 bg-red-500/10 border border-red-500/20 text-red-500">
+                  <AlertTriangle size={18} />
+                  <span className="leading-relaxed">{aiError}</span>
+                </div>
+              )}
+              
+              {aiResult && (
+                <div className="space-y-6 flex-1 overflow-y-auto pr-2 pb-4 animate-slide-up">
+                  <div className="bg-card border border-border rounded-2xl p-6 relative overflow-hidden">
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full blur-3xl rounded-tr-none"></div>
+                    <div className="relative z-10">
+                      <h3 className="text-2xl font-black text-foreground mb-1">{aiResult.name}</h3>
+                      <p className="text-primary font-bold text-sm mb-4">Generic: {aiResult.genericName}</p>
+                      
+                      <div className="space-y-4">
+                        <div>
+                          <h4 className="text-xs font-black uppercase tracking-widest text-muted-foreground mb-2 flex items-center gap-2">Purpose</h4>
+                          <p className="text-sm text-foreground/80 leading-relaxed bg-background/50 p-4 rounded-xl border border-border/50">{aiResult.purpose}</p>
+                        </div>
                       </div>
                     </div>
-                    <span className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-4 py-1.5 rounded-full font-bold text-xs tracking-wider uppercase">Stock: {alt.stock}</span>
                   </div>
-                ))}
-              </div>
+
+                  {aiResult.alternatives && aiResult.alternatives.length > 0 && (
+                    <div>
+                      <h4 className="text-sm font-black uppercase tracking-widest text-foreground mb-4 flex items-center gap-2">
+                        <Package size={16} className="text-primary" /> Available Alternatives
+                      </h4>
+                      <div className="grid gap-4">
+                        {aiResult.alternatives.map((alt: any, i: number) => {
+                          // Check if we have this alternative in stock
+                          const inStockMatch = processedData.inventory.find((med: any) => med.name.toLowerCase().includes(alt.name.toLowerCase()));
+                          const stockCount = inStockMatch ? inStockMatch.quantity : 0;
+                          
+                          return (
+                            <div key={i} className="glass-panel p-6 rounded-2xl border border-border flex justify-between items-center shadow-lg hover:border-primary/20 transition-all group">
+                              <div className="flex items-center gap-4">
+                                <div className="w-10 h-10 bg-white/5 rounded-full flex items-center justify-center text-primary border border-border group-hover:bg-primary/10 transition-colors">
+                                  <FlaskConical className="w-5 h-5" />
+                                </div>
+                                <div>
+                                  <h4 className="font-semibold text-foreground group-hover:text-primary transition-colors">{alt.name}</h4>
+                                  <p className="text-xs text-muted-foreground tracking-wider uppercase mt-1">Mfr: {alt.manufacturer}</p>
+                                </div>
+                              </div>
+                              {stockCount > 0 ? (
+                                <span className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-4 py-1.5 rounded-full font-bold text-xs tracking-wider uppercase">Vault Stock: {stockCount}</span>
+                              ) : (
+                                <span className="bg-red-500/10 text-red-500/70 border border-red-500/20 px-4 py-1.5 rounded-full font-bold text-xs tracking-wider uppercase">Not in Vault</span>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           )}
 
