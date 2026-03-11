@@ -227,7 +227,14 @@ export default function ConsumerDashboard() {
       );
       
       scanner.render((decodedText) => {
-        setBatchId(decodedText);
+        let cleanId = decodedText.trim();
+        try {
+          const url = new URL(cleanId);
+          const parts = url.pathname.split('/');
+          cleanId = parts.pop() || cleanId;
+        } catch (err) { }
+        
+        setBatchId(cleanId);
         setIsScannerOpen(false);
         if(scanner) scanner.clear();
       }, (error) => {
@@ -256,10 +263,22 @@ export default function ConsumerDashboard() {
     setMessage("Scanning Ledger...");
     setMessageType("");
 
+    // The QR code might contain a full URL (e.g. https://.../verify/BATCH-123)
+    // Extract the actual batch ID if it's a URL
+    let cleanBatchId = batchId.trim();
+    try {
+      const url = new URL(cleanBatchId);
+      const parts = url.pathname.split('/');
+      // take the last part of the path as the batch ID
+      cleanBatchId = parts.pop() || cleanBatchId;
+    } catch (err) {
+      // not a url, use as is
+    }
+
     const { data: batchData, error: fetchError } = await supabase
       .from("batches")
       .select("*")
-      .eq("batch_id", batchId)
+      .eq("batch_id", cleanBatchId)
       .single();
 
     if (fetchError || !batchData) {
@@ -271,7 +290,7 @@ export default function ConsumerDashboard() {
     // Save scan entry
     const { error: insertError } = await supabase
       .from("user_scans")
-      .insert([{ user_id: user?.id, batch_id: batchId }]);
+      .insert([{ user_id: user?.id, batch_id: cleanBatchId }]);
 
     if (!insertError) {
       await fetchHistory(user!.id);
