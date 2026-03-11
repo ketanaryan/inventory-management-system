@@ -119,18 +119,100 @@ export default function ConsumerDashboard() {
     setVerificationHistory(formatted);
   };
 
-  // ===== 2. MAP SETUP (Original Behavior) =====
+  // ===== 2. MAP SETUP & GEOLOCATION =====
   useEffect(() => {
     if (loading) return;
     let map: any;
-    const initMap = async () => {
-      const L = (await import("leaflet")).default;
+    let L: any;
+    let mapInstanceLoaded = false;
+
+    const initMap = async (lat: number, lng: number) => {
+      if (mapInstanceLoaded) return;
+      L = (await import("leaflet")).default;
+      
       const container = L.DomUtil.get("healthcare-map");
       if (container) (container as any)._leaflet_id = null;
-      map = L.map("healthcare-map").setView([19.2183, 72.9781], 11);
+      
+      map = L.map("healthcare-map").setView([lat, lng], 13);
+      mapInstanceLoaded = true;
       L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", { maxZoom: 20 }).addTo(map);
+
+      // Add User Marker
+      const userIcon = L.divIcon({
+        className: "custom-div-icon",
+        html: `<div style="background-color: #3b82f6; width: 14px; height: 14px; border-radius: 50%; border: 3px solid white; box-shadow: 0 0 10px rgba(59,130,246,0.8); animation: pulse 2s infinite;"></div>`,
+        iconSize: [20, 20],
+        iconAnchor: [10, 10]
+      });
+      L.marker([lat, lng], { icon: userIcon }).addTo(map)
+        .bindPopup("<b>You are here</b><br>Fetching nearby hospitals...");
+
+      fetchNearbyHospitals(lat, lng);
     };
-    initMap();
+
+    const fetchNearbyHospitals = async (lat: number, lng: number) => {
+      try {
+        // Query OpenStreetMap via Overpass API for hospitals within ~5km radius
+        const query = `
+          [out:json];
+          (
+            node["amenity"="hospital"](around:5000, ${lat}, ${lng});
+            way["amenity"="hospital"](around:5000, ${lat}, ${lng});
+            relation["amenity"="hospital"](around:5000, ${lat}, ${lng});
+          );
+          out center;
+        `;
+        const url = `https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`;
+        const response = await fetch(url);
+        const data = await response.json();
+
+        // Add hospital markers
+        const hospitalIcon = L.divIcon({
+          className: "custom-div-icon",
+          html: `<div style="background-color: #ef4444; width: 12px; height: 12px; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 8px rgba(239,68,68,0.8);"></div>`,
+          iconSize: [16, 16],
+          iconAnchor: [8, 8]
+        });
+
+        if (data.elements && data.elements.length > 0) {
+           data.elements.forEach((element: any) => {
+             const hLat = element.lat || element.center?.lat;
+             const hLon = element.lon || element.center?.lon;
+             const name = element.tags?.name || "Unknown Hospital/Clinic";
+             
+             if (hLat && hLon) {
+               L.marker([hLat, hLon], { icon: hospitalIcon }).addTo(map)
+                 .bindPopup(`<b>${name}</b><br>Verified Facility`);
+             }
+           });
+        } else {
+           L.popup().setLatLng([lat, lng]).setContent("No hospitals found nearby.").openOn(map);
+        }
+
+      } catch (err) {
+        console.error("Failed to fetch hospitals from OSM:", err);
+      }
+    };
+
+    // Try HTML5 Geolocation
+    if ("geolocation" in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          // Success
+          initMap(position.coords.latitude, position.coords.longitude);
+        },
+        (error) => {
+          console.warn("Geolocation denied or failed. Using default location.", error);
+          // Fallback to Mumbai
+          initMap(19.2183, 72.9781);
+        },
+        { timeout: 10000 }
+      );
+    } else {
+      // Not supported
+      initMap(19.2183, 72.9781);
+    }
+
     return () => { if (map) map.remove(); };
   }, [loading]);
 
@@ -160,7 +242,12 @@ export default function ConsumerDashboard() {
     };
   }, [isScannerOpen]);
 
-  // ===== 3. HANDLERS (VERIFY & DELETE) =====
+  // ===== 3. HANDLERS =====
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    router.push("/auth/login");
+  };
+
   const handleVerify = async (e: React.FormEvent) => {
     e.preventDefault();
     if(!batchId.trim()) return;
@@ -245,7 +332,7 @@ export default function ConsumerDashboard() {
           </div>
           <div className="flex items-center gap-6">
             <ThemeToggle />
-            <button onClick={() => supabase.auth.signOut()} className="text-sm text-red-400 flex items-center gap-2 font-medium">
+            <button onClick={handleLogout} className="text-sm text-red-400 flex items-center gap-2 font-medium hover:text-red-300 transition-colors">
               <LogOut size={16} /> Disconnect
             </button>
           </div>
