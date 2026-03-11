@@ -9,8 +9,9 @@ import ThemeToggle from "@/components/ThemeToggle";
 import { 
   Search, ShieldCheck, ShieldAlert, LogOut, 
   Navigation, Calendar, Package, Info, Bookmark, Trash2, Clock,
-  Activity, AlertTriangle, Scan, Flag, Sparkles
+  Activity, AlertTriangle, Scan, Flag, Sparkles, X
 } from "lucide-react";
+import { Html5QrcodeScanner } from "html5-qrcode";
 import { getMedicineAlternatives } from "@/app/actions/getMedicineAlternatives";
 
 export default function ConsumerDashboard() {
@@ -19,6 +20,7 @@ export default function ConsumerDashboard() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<"verify" | "history" | "alternatives">("verify");
+  const [isScannerOpen, setIsScannerOpen] = useState(false);
 
   interface AlternativeMedicine { name: string; manufacturer: string; }
   interface AIResult { name: string; genericName?: string; purpose?: string; alternatives?: AlternativeMedicine[]; precautions?: string[]; }
@@ -132,6 +134,32 @@ export default function ConsumerDashboard() {
     return () => { if (map) map.remove(); };
   }, [loading]);
 
+  useEffect(() => {
+    let scanner: Html5QrcodeScanner | null = null;
+    
+    if (isScannerOpen) {
+      scanner = new Html5QrcodeScanner(
+        "qr-reader",
+        { fps: 10, qrbox: { width: 250, height: 250 } },
+        false
+      );
+      
+      scanner.render((decodedText) => {
+        setBatchId(decodedText);
+        setIsScannerOpen(false);
+        if(scanner) scanner.clear();
+      }, (error) => {
+        // silently handle scan errors (it fires constantly when searching for code)
+      });
+    }
+
+    return () => {
+      if (scanner) {
+        scanner.clear().catch(console.error);
+      }
+    };
+  }, [isScannerOpen]);
+
   // ===== 3. HANDLERS (VERIFY & DELETE) =====
   const handleVerify = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -208,8 +236,8 @@ export default function ConsumerDashboard() {
 
       {/* Navbar */}
       <nav className="border-b border-border bg-background/50 backdrop-blur-md sticky top-0 z-50">
-        <div className="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
-          <div className="flex items-center gap-3 font-bold text-lg tracking-tight">
+        <div className="max-w-6xl mx-auto px-4 md:px-6 py-4 flex justify-between items-center">
+          <div className="flex items-center gap-3 font-bold text-base md:text-lg tracking-tight">
             <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-purple-600 flex items-center justify-center shadow-lg">
               <ShieldCheck className="w-4 h-4 text-white" />
             </div>
@@ -224,7 +252,7 @@ export default function ConsumerDashboard() {
         </div>
       </nav>
 
-      <div className="max-w-6xl mx-auto px-6 py-12 relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-10">
+      <div className="max-w-6xl mx-auto px-4 md:px-6 py-6 md:py-12 relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 md:gap-10">
         
         {/* Left Column: Tools */}
         <div className="lg:col-span-5 space-y-6">
@@ -260,19 +288,15 @@ export default function ConsumerDashboard() {
             <div className="glass-panel p-8 rounded-3xl border border-border shadow-2xl animate-fade-in">
               <h2 className="text-xl font-bold mb-8 text-center uppercase tracking-tighter italic">Product Handshake</h2>
               
-              <div className="flex gap-2 mb-4">
+              <div className="flex flex-col sm:flex-row gap-2 mb-4">
                 <button 
-                  onClick={() => {
-                    setIsScanningStatus(true);
-                    setTimeout(() => {
-                      alert("Camera module offline or permission denied. Please enter batch ID manually.");
-                      setIsScanningStatus(false);
-                    }, 1500);
-                  }}
-                  className="bg-card border border-border hover:bg-card/80 text-foreground px-4 py-4 rounded-xl flex items-center justify-center transition-all shadow-sm"
+                  type="button"
+                  onClick={() => setIsScannerOpen(true)}
+                  className="bg-card border border-border hover:bg-card/80 text-foreground px-4 py-4 rounded-xl flex items-center justify-center transition-all shadow-sm w-full sm:w-auto"
                   title="Scan QR Code"
                 >
-                  <Scan size={20} className={isScanningStatus ? "animate-pulse text-primary" : "text-muted-foreground"} />
+                  <Scan size={20} className={isScannerOpen ? "animate-pulse text-primary" : "text-muted-foreground"} />
+                  <span className="ml-2 sm:hidden font-bold text-xs">SCAN QR</span>
                 </button>
                 <form onSubmit={handleVerify} className="flex-1 flex gap-2">
                   <input
@@ -287,6 +311,18 @@ export default function ConsumerDashboard() {
                   </button>
                 </form>
               </div>
+
+              {isScannerOpen && (
+                <div className="mb-6 bg-card border border-border rounded-xl p-4 relative">
+                  <button 
+                    onClick={() => setIsScannerOpen(false)}
+                    className="absolute top-2 right-2 z-10 bg-background/80 p-1.5 rounded-full hover:bg-background transition-colors"
+                  >
+                    <X size={16} />
+                  </button>
+                  <div id="qr-reader" className="w-full rounded-lg overflow-hidden [&_video]:w-full [&_video]:object-cover" />
+                </div>
+              )}
 
               {message && (
                 <div className={`p-4 rounded-xl text-xs font-bold mb-6 flex items-start gap-3 border ${messageType === "success" ? "bg-emerald-50 border-emerald-100 text-emerald-600" : "bg-red-50 border-red-100 text-red-600"}`}>
@@ -317,7 +353,7 @@ export default function ConsumerDashboard() {
           )}
 
           {activeTab === "history" && (
-            <div className="glass-panel p-8 rounded-3xl border border-border shadow-2xl h-[580px] overflow-y-auto">
+            <div className="glass-panel p-6 md:p-8 rounded-3xl border border-border shadow-2xl h-[500px] md:h-[580px] overflow-y-auto">
               <h2 className="text-xl font-bold mb-6 flex items-center gap-2 italic uppercase tracking-tighter"><Bookmark size={20}/> Secured Cabinet</h2>
               <div className="space-y-3">
                 {verificationHistory.length === 0 ? (
@@ -385,7 +421,7 @@ export default function ConsumerDashboard() {
           )}
 
           {activeTab === "alternatives" && (
-            <div className="glass-panel p-8 rounded-3xl border border-border shadow-2xl animate-fade-in min-h-[580px] flex flex-col">
+            <div className="glass-panel p-6 md:p-8 rounded-3xl border border-border shadow-2xl animate-fade-in min-h-[500px] md:min-h-[580px] flex flex-col">
               <h2 className="text-xl font-bold mb-6 flex items-center gap-2 italic uppercase tracking-tighter text-primary">
                 <Sparkles size={20}/> AI Medicine Guide
               </h2>
@@ -459,12 +495,12 @@ export default function ConsumerDashboard() {
         {/* Right Column: Map */}
         <div className="lg:col-span-7 space-y-4">
           <div className="flex items-center justify-between px-2">
-            <h2 className="text-2xl font-bold tracking-tight text-foreground flex items-center gap-3">
-              <Navigation className="w-6 h-6 text-primary" /> Facility Radar
+            <h2 className="text-xl md:text-2xl font-bold tracking-tight text-foreground flex items-center gap-3">
+              <Navigation className="w-5 h-5 md:w-6 md:h-6 text-primary" /> Facility Radar
             </h2>
           </div>
           <div className="glass-panel p-2 rounded-3xl border border-border shadow-2xl relative">
-            <div id="healthcare-map" className="w-full h-[605px] rounded-2xl bg-[#09090b]" />
+            <div id="healthcare-map" className="w-full h-[400px] md:h-[605px] rounded-2xl bg-[#09090b]" />
           </div>
         </div>
       </div>

@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useForm, SubmitHandler } from 'react-hook-form';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/utils/supabase';
 
 type Inputs = {
@@ -14,6 +14,12 @@ export default function LoginPage() {
   const { register, handleSubmit, formState: { errors } } = useForm<Inputs>();
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
+
+  useEffect(() => {
+    // Automatically clear any stale/corrupt session when landing on the login page
+    // This prevents the "Invalid Refresh Token" background error.
+    supabase.auth.signOut().catch(() => {});
+  }, []);
 
   const onSubmit: SubmitHandler<Inputs> = async (data) => {
     setError(null);

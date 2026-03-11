@@ -155,7 +155,7 @@ export default function HospitalDashboard() {
   ];
 
   return (
-    <div className="flex min-h-screen bg-background text-foreground font-sans overflow-hidden selection:bg-primary/30">
+    <div className="flex flex-col lg:flex-row min-h-screen bg-background text-foreground font-sans overflow-hidden selection:bg-primary/30">
       
       {/* Decorative Background Elements */}
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0">
@@ -164,25 +164,27 @@ export default function HospitalDashboard() {
       </div>
 
       {/* SIDEBAR */}
-      <aside className="w-72 glass border-r border-border flex flex-col relative z-20 shrink-0">
-        <div className="p-8 border-b border-border flex items-center">
-          <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-primary rounded-xl flex items-center justify-center text-foreground font-bold mr-4 shadow-lg shadow-blue-500/20">
-            <FlaskConical className="w-5 h-5" />
-          </div>
-          <div>
-            <h1 className="text-xl font-bold tracking-tight leading-none text-foreground">PharmaDash</h1>
-            <span className="text-xs text-blue-400 font-medium uppercase tracking-wider mt-1 block">Hospital Node</span>
+      <aside className="w-full lg:w-72 glass border-b lg:border-b-0 lg:border-r border-border flex flex-col relative z-20 shrink-0">
+        <div className="p-4 lg:p-8 border-b border-border flex items-center justify-between lg:justify-start">
+          <div className="flex items-center">
+            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-primary rounded-xl flex items-center justify-center text-foreground font-bold mr-4 shadow-lg shadow-blue-500/20">
+              <FlaskConical className="w-5 h-5" />
+            </div>
+            <div>
+              <h1 className="text-xl font-bold tracking-tight leading-none text-foreground">PharmaDash</h1>
+              <span className="text-xs text-blue-400 font-medium uppercase tracking-wider mt-1 lg:block hidden">Hospital Node</span>
+            </div>
           </div>
         </div>
 
-        <nav className="flex-1 px-4 py-8 space-y-2 overflow-y-auto">
+        <nav className="flex-none lg:flex-1 px-4 py-4 lg:py-8 flex flex-row lg:flex-col gap-2 overflow-x-auto lg:overflow-y-auto no-scrollbar">
           {tabs.map((item) => {
             const isActive = activeTab === item.id;
             return (
               <button
                 key={item.id}
                 onClick={() => setActiveTab(item.id)}
-                className={`w-full flex items-center justify-between px-4 py-3.5 rounded-xl transition-all duration-300 relative group overflow-hidden ${
+                className={`flex-none lg:w-full flex items-center justify-between px-4 py-3.5 rounded-xl transition-all duration-300 relative group overflow-hidden whitespace-nowrap ${
                   isActive ? "text-primary-foreground shadow-lg" : "text-muted-foreground hover:text-foreground hover:bg-muted"
                 }`}
               >
@@ -205,7 +207,7 @@ export default function HospitalDashboard() {
           })}
         </nav>
 
-        <div className="p-6 border-t border-border bg-card">
+        <div className="hidden lg:block p-6 border-t border-border bg-card">
           <button onClick={handleLogout} className="flex items-center gap-3 text-muted-foreground hover:text-red-400 w-full transition-colors font-medium text-sm">
             <LogOut size={18}/> Terminate Session
           </button>
@@ -213,8 +215,8 @@ export default function HospitalDashboard() {
       </aside>
 
       {/* MAIN CONTENT */}
-      <div className="flex-1 flex flex-col relative z-10">
-        <header className="px-10 py-6 border-b border-border flex justify-between items-center backdrop-blur-md bg-background/50 sticky top-0 shrink-0 z-10">
+      <div className="flex-1 flex flex-col relative z-10 w-full overflow-hidden">
+        <header className="px-6 lg:px-10 py-4 lg:py-6 border-b border-border flex justify-between items-center backdrop-blur-md bg-background/50 sticky top-0 shrink-0 z-10">
           <div className="flex items-center gap-3">
              <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
              <h2 className="text-sm tracking-wider uppercase font-bold text-foreground opacity-90">{activeTab}</h2>
@@ -227,11 +229,11 @@ export default function HospitalDashboard() {
           </div>
         </header>
 
-        <main className="flex-1 overflow-y-auto p-10 custom-scrollbar">
+        <main className="flex-1 overflow-y-auto p-4 lg:p-10 custom-scrollbar w-full">
           
           {/* 1. OVERVIEW */}
           {activeTab === "Dashboard" && (
-            <div className="space-y-8 animate-fade-in relative z-10 pb-16">
+            <div className="space-y-8 animate-fade-in relative z-10 pb-16 w-full">
               <h2 className="text-3xl font-bold tracking-tight text-foreground mb-8">Facility Overview</h2>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <StatCard title="Total Network Stock" value={processedData.inventory.length} icon={<Package className="text-blue-500 w-8 h-8"/>} textColor="text-blue-400" bgColor="bg-blue-500/10" borderColor="border-blue-500/20" />

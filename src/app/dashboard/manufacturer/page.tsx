@@ -396,10 +396,10 @@ export default function ManufacturerDashboard() {
           <div className="space-y-8 animate-fade-in relative z-10 pb-16">
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
               <div>
-                <h2 className="text-3xl font-bold tracking-tight text-foreground">
+                <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-foreground">
                   Overview Insight
                 </h2>
-                <p className="text-muted-foreground mt-1">
+                <p className="text-muted-foreground mt-1 text-sm md:text-base">
                   Real-time intelligence on your supply network.
                 </p>
               </div>
@@ -447,31 +447,31 @@ export default function ManufacturerDashboard() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
               <div className="glass-panel p-6 rounded-2xl flex flex-col justify-center relative overflow-hidden group">
                 <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                  <Package className="w-16 h-16 text-foreground" />
+                  <Package className="w-12 h-12 md:w-16 md:h-16 text-foreground" />
                 </div>
-                <p className="text-sm font-medium text-muted-foreground mb-1 uppercase tracking-wider">
+                <p className="text-xs md:text-sm font-medium text-muted-foreground mb-1 uppercase tracking-wider">
                   Total Batches
                 </p>
                 <div className="flex items-end gap-3">
-                  <h3 className="text-4xl font-bold text-foreground">
+                  <h3 className="text-3xl md:text-4xl font-bold text-foreground">
                     {totalBatches}
                   </h3>
-                  <span className="text-sm text-primary mb-1">Registered</span>
+                  <span className="text-xs md:text-sm text-primary mb-1">Registered</span>
                 </div>
               </div>
 
               <div className="glass-panel p-6 rounded-2xl flex flex-col justify-center relative overflow-hidden group">
                 <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                  <Activity className="w-16 h-16 text-emerald-500" />
+                  <Activity className="w-12 h-12 md:w-16 md:h-16 text-emerald-500" />
                 </div>
-                <p className="text-sm font-medium text-muted-foreground mb-1 uppercase tracking-wider">
+                <p className="text-xs md:text-sm font-medium text-muted-foreground mb-1 uppercase tracking-wider">
                   Active Lifecycle
                 </p>
                 <div className="flex items-end gap-3">
-                  <h3 className="text-4xl font-bold text-emerald-400">
+                  <h3 className="text-3xl md:text-4xl font-bold text-emerald-400">
                     {activeBatches}
                   </h3>
-                  <span className="text-sm text-emerald-500/70 mb-1">
+                  <span className="text-xs md:text-sm text-emerald-500/70 mb-1">
                     Currently Valid
                   </span>
                 </div>
@@ -479,16 +479,16 @@ export default function ManufacturerDashboard() {
 
               <div className="glass-panel p-6 rounded-2xl flex flex-col justify-center relative overflow-hidden group">
                 <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                  <ShieldAlert className="w-16 h-16 text-red-500" />
+                  <ShieldAlert className="w-12 h-12 md:w-16 md:h-16 text-red-500" />
                 </div>
-                <p className="text-sm font-medium text-muted-foreground mb-1 uppercase tracking-wider">
+                <p className="text-xs md:text-sm font-medium text-muted-foreground mb-1 uppercase tracking-wider">
                   Recalled
                 </p>
                 <div className="flex items-end gap-3">
-                  <h3 className="text-4xl font-bold text-red-400">
+                  <h3 className="text-3xl md:text-4xl font-bold text-red-400">
                     {recalledBatches}
                   </h3>
-                  <span className="text-sm text-red-500/70 mb-1">
+                  <span className="text-xs md:text-sm text-red-500/70 mb-1">
                     System Alerts
                   </span>
                 </div>
@@ -687,11 +687,11 @@ export default function ManufacturerDashboard() {
 
       case "Register Batch":
         return (
-          <div className="max-w-4xl mx-auto animate-fade-in relative z-10">
-            <h2 className="text-3xl font-bold tracking-tight text-foreground mb-8">
+          <div className="max-w-4xl mx-auto animate-fade-in relative z-10 px-4 md:px-0">
+            <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-foreground mb-6 md:mb-8">
               Register New Batch
             </h2>
-            <div className="glass-panel rounded-2xl p-8 relative overflow-hidden">
+            <div className="glass-panel rounded-2xl p-6 md:p-8 relative overflow-hidden">
               <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-[100px] pointer-events-none" />
 
               {registerMessage.text && (
@@ -755,7 +755,7 @@ export default function ManufacturerDashboard() {
                         </button>
                       )}
 
-                      <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+                      <div className="grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-6">
                         <div className="md:col-span-5">
                           <label className="block text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wider">
                             Chemical / Name
@@ -767,7 +767,7 @@ export default function ManufacturerDashboard() {
                             onChange={(e) =>
                               handleMedicineChange(index, "name", e.target.value)
                             }
-                            className="w-full px-4 py-3 bg-white/5 text-sm border border-transparent rounded-lg focus:ring-1 focus:ring-primary outline-none text-foreground placeholder:text-muted"
+                            className="w-full px-4 py-3 bg-white/5 text-sm border border-transparent rounded-lg focus:ring-1 focus:ring-primary outline-none text-foreground placeholder:text-muted shadow-sm"
                           />
                         </div>
                         <div className="md:col-span-3">
@@ -786,7 +786,7 @@ export default function ManufacturerDashboard() {
                                 e.target.value
                               )
                             }
-                            className="w-full px-4 py-3 bg-white/5 text-sm border border-transparent rounded-lg focus:ring-1 focus:ring-primary outline-none text-foreground placeholder:text-muted"
+                            className="w-full px-4 py-3 bg-white/5 text-sm border border-transparent rounded-lg focus:ring-1 focus:ring-primary outline-none text-foreground placeholder:text-muted shadow-sm"
                           />
                         </div>
                         <div className="md:col-span-4">
