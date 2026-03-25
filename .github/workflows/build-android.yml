@@ -17,7 +17,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20' # Use your project's node version
+          node-version: '22' # Capacitor requires Node >= 22.0.0
 
       - name: Setup Java
         uses: actions/setup-java@v4
