@@ -28,12 +28,11 @@ jobs:
       - name: Install Dependencies
         run: npm install
 
-      # We need to build the Web project so the assets can be synced to Android
-      - name: Build Next.js App
-        run: npm run build
-        env:
-          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
-          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+      # Since Capacitor handles the Vercel URL directly, we skip Next.js static build!
+      - name: Create Web Root Dummy
+        run: |
+          mkdir -p out
+          echo "<html><body>Loading PharmaVerify...</body></html>" > out/index.html
 
       - name: Sync Capacitor Android
         run: npx cap sync android
