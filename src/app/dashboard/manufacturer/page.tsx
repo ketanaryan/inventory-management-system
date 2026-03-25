@@ -38,7 +38,9 @@ import {
   Sparkles,
   RefreshCw,
   Zap,
+  UploadCloud,
 } from "lucide-react";
+import * as XLSX from "xlsx";
 
 type MedicineEntry = {
   name: string;
@@ -142,6 +144,63 @@ export default function ManufacturerDashboard() {
   const removeMedicineEntry = (index: number) => {
     const newMedicines = medicines.filter((_, i) => i !== index);
     setMedicines(newMedicines);
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      const arrayBuffer = evt.target?.result;
+      if (!arrayBuffer) return;
+      
+      const workbook = XLSX.read(arrayBuffer, { type: "array" });
+      const wsname = workbook.SheetNames[0];
+      const ws = workbook.Sheets[wsname];
+      const data = XLSX.utils.sheet_to_json<any>(ws, { header: 1, raw: false, dateNF: 'yyyy-mm-dd' });
+
+      const parsedMedicines: MedicineEntry[] = [];
+      
+      // Start from row 1, skipping header at 0
+      for (let i = 1; i < data.length; i++) {
+        const row = data[i];
+        if (row && row.length >= 2) {
+          const name = row[0] ? String(row[0]).trim() : "";
+          const quantity = row[1] ? String(row[1]).trim() : "";
+          let expiryDate = row[2] ? String(row[2]).trim() : "";
+
+          // if date is in mm/dd/yy or similar, simple fallback to parse logic, but raw:false handles most.
+          // Fallback if not matching "yyyy-mm-dd" for HTML date input:
+          if (expiryDate && !/^\d{4}-\d{2}-\d{2}$/.test(expiryDate)) {
+             try {
+                const d = new Date(expiryDate);
+                if (!isNaN(d.getTime())) {
+                  expiryDate = d.toISOString().split("T")[0];
+                }
+             } catch(e) {}
+          }
+          
+          if (name && quantity && expiryDate) {
+            parsedMedicines.push({ name, quantity, expiryDate });
+          }
+        }
+      }
+
+      if (parsedMedicines.length > 0) {
+        const isEmpty = medicines.length === 1 && !medicines[0].name && !medicines[0].quantity && !medicines[0].expiryDate;
+        if (isEmpty) {
+           setMedicines(parsedMedicines);
+        } else {
+           setMedicines([...medicines, ...parsedMedicines]);
+        }
+        setRegisterMessage({ text: "Excel uploaded and mapped successfully!", type: "success" });
+      } else {
+        setRegisterMessage({ text: "No valid medicine data found in the Excel file. Please ensure columns are Name, Quantity, ExpiryDate.", type: "error" });
+      }
+    };
+    reader.readAsArrayBuffer(file);
+    e.target.value = "";
   };
 
   const handleRegisterBatch = async (e: React.FormEvent) => {
@@ -730,13 +789,28 @@ export default function ManufacturerDashboard() {
                     <label className="block text-sm font-medium text-muted-foreground">
                       Package Inventory
                     </label>
-                    <button
-                      type="button"
-                      onClick={addMedicineEntry}
-                      className="text-sm font-medium text-primary hover:text-primary/80 flex items-center gap-2 transition-colors"
-                    >
-                      <PlusCircle className="w-4 h-4" /> Add Substance
-                    </button>
+                    <div className="flex items-center gap-4">
+                      <input 
+                        type="file" 
+                        accept=".xlsx, .xls, .csv" 
+                        id="excel-upload" 
+                        className="hidden" 
+                        onChange={handleFileUpload} 
+                      />
+                      <label
+                        htmlFor="excel-upload"
+                        className="cursor-pointer text-sm font-medium text-emerald-400 hover:text-emerald-300 flex items-center gap-2 transition-colors"
+                      >
+                        <UploadCloud className="w-4 h-4" /> Upload Excel
+                      </label>
+                      <button
+                        type="button"
+                        onClick={addMedicineEntry}
+                        className="text-sm font-medium text-primary hover:text-primary/80 flex items-center gap-2 transition-colors"
+                      >
+                        <PlusCircle className="w-4 h-4" /> Add Substance
+                      </button>
+                    </div>
                   </div>
 
                   {medicines.map((medicine, index) => (
