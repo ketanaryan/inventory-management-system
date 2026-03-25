@@ -142,8 +142,10 @@ export default function ManufacturerDashboard() {
   };
 
   const removeMedicineEntry = (index: number) => {
-    const newMedicines = medicines.filter((_, i) => i !== index);
-    setMedicines(newMedicines);
+    if (confirm("Are you sure you want to delete this medicine?")) {
+      const newMedicines = medicines.filter((_, i) => i !== index);
+      setMedicines(newMedicines);
+    }
   };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -441,7 +443,7 @@ export default function ManufacturerDashboard() {
         <div className="flex flex-col items-center gap-4 animate-pulse">
           <Activity className="w-10 h-10 text-primary animate-spin" />
           <div className="text-xl font-medium tracking-tight">
-            Initializing PharmaDash Secure Core...
+            Initializing PharmaDash Dashboard...
           </div>
         </div>
       </div>
@@ -473,8 +475,8 @@ export default function ManufacturerDashboard() {
                        <Sparkles className="w-5 h-5" />
                     </div>
                     <div>
-                      <h3 className="text-lg font-bold text-foreground tracking-tight">Nexus AI Analysis</h3>
-                      <p className="text-[10px] text-primary font-bold tracking-widest uppercase mt-0.5">Strategic Operations Node</p>
+                      <h3 className="text-lg font-bold text-foreground tracking-tight">AI Insights</h3>
+                      <p className="text-[10px] text-primary font-bold tracking-widest uppercase mt-0.5">Inventory Analysis</p>
                     </div>
                  </div>
                  <button onClick={generateInsights} disabled={loadingInsights} className="bg-primary hover:bg-primary/90 disabled:opacity-50 text-foreground px-6 py-3 rounded-xl font-bold shadow-[0_0_20px_rgba(139,92,246,0.3)] transition-all flex items-center gap-2 text-xs uppercase tracking-widest active:scale-[0.98]">
@@ -496,7 +498,7 @@ export default function ManufacturerDashboard() {
                  ) : (
                    <div className="p-10 text-center text-muted-foreground border border-dashed border-border rounded-2xl bg-card flex flex-col items-center justify-center">
                       <Sparkles className="w-8 h-8 opacity-20 mb-3" />
-                      <span className="text-sm uppercase tracking-wider font-semibold">Nexus AI is standing by to analyze current network state.</span>
+                      <span className="text-sm uppercase tracking-wider font-semibold">AI is ready to analyze current inventory.</span>
                    </div>
                  )}
                </div>
@@ -773,13 +775,13 @@ export default function ManufacturerDashboard() {
               <form onSubmit={handleRegisterBatch} className="space-y-8 relative z-10">
                 <div>
                   <label className="block text-sm font-medium text-muted-foreground mb-2">
-                    Global Batch Identifier
+                    Batch ID
                   </label>
                   <input
                     type="text"
                     value={batchId}
                     onChange={(e) => setBatchId(e.target.value)}
-                    placeholder="e.g. BATCH-2026-NEXUS"
+                    placeholder="e.g. BATCH-2026-XYZ"
                     className="w-full px-5 py-4 bg-card border border-border rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all text-foreground placeholder:text-muted-foreground"
                   />
                 </div>
@@ -787,7 +789,7 @@ export default function ManufacturerDashboard() {
                 <div className="space-y-6">
                   <div className="flex items-center justify-between">
                     <label className="block text-sm font-medium text-muted-foreground">
-                      Package Inventory
+                      Medicines
                     </label>
                     <div className="flex items-center gap-4">
                       <input 
@@ -832,7 +834,7 @@ export default function ManufacturerDashboard() {
                       <div className="grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-6">
                         <div className="md:col-span-5">
                           <label className="block text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wider">
-                            Chemical / Name
+                            Medicine Name
                           </label>
                           <input
                             type="text"
@@ -846,7 +848,7 @@ export default function ManufacturerDashboard() {
                         </div>
                         <div className="md:col-span-3">
                           <label className="block text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wider">
-                            Volume
+                            Quantity
                           </label>
                           <input
                             type="number"
@@ -865,7 +867,7 @@ export default function ManufacturerDashboard() {
                         </div>
                         <div className="md:col-span-4">
                           <label className="block text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wider">
-                            Expiration Constraint
+                            Expiry Date
                           </label>
                           <input
                             type="date"
@@ -890,7 +892,7 @@ export default function ManufacturerDashboard() {
                     type="submit"
                     className="w-full bg-primary hover:bg-primary/90 text-foreground font-medium py-4 rounded-xl shadow-[0_0_20px_rgba(139,92,246,0.3)] transition-all active:scale-[0.98] tracking-wide"
                   >
-                    Commit to Network
+                    Submit Batch
                   </button>
                 </div>
               </form>
@@ -898,7 +900,7 @@ export default function ManufacturerDashboard() {
               {qrValue && (
                 <div className="mt-12 pt-8 border-t border-border flex flex-col items-center animate-slide-up">
                   <p className="text-sm font-semibold text-primary mb-6 uppercase tracking-widest">
-                    Verification Artifact Generated
+                    QR Code Generated
                   </p>
                   <div className="bg-white p-6 rounded-2xl shadow-[0_0_40px_rgba(139,92,246,0.2)]">
                     <QRCodeCanvas
@@ -909,7 +911,7 @@ export default function ManufacturerDashboard() {
                     />
                   </div>
                   <p className="mt-6 text-sm text-muted-foreground text-center max-w-md">
-                    Secure trace recorded. Use QR Tools to export this high-fidelity code for physical labeling.
+                    Batch recorded successfully. Use the generated QR code to print labels.
                   </p>
                 </div>
               )}
@@ -943,19 +945,19 @@ export default function ManufacturerDashboard() {
               <form onSubmit={handleRecallBatch} className="space-y-8 relative z-10">
                 <div>
                   <label className="block text-sm font-medium text-muted-foreground mb-2">
-                    Target Batch Identifier
+                    Target Batch ID
                   </label>
                   <input
                     type="text"
                     value={recallBatchId}
                     onChange={(e) => setRecallBatchId(e.target.value)}
-                    placeholder="Enter strictly matched ID..."
+                    placeholder="Enter valid Target Batch ID..."
                     className="w-full px-5 py-4 bg-card border border-red-500/30 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none transition-all text-foreground placeholder:text-muted-foreground"
                   />
                   <div className="mt-4 p-4 bg-amber-500/10 rounded-xl border border-amber-500/20 flex items-start gap-3">
                     <AlertTriangle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
                     <p className="text-sm text-amber-200 leading-relaxed">
-                      <strong>Critical Action:</strong> This propagates a permanent compromised status across the supply chain ledger. Terminal nodes will reject this batch instantly.
+                      <strong>Critical Action:</strong> This marks the batch as permanently recalled. It will alert all connected hospitals and pharmacies.
                     </p>
                   </div>
                 </div>
@@ -964,7 +966,7 @@ export default function ManufacturerDashboard() {
                   type="submit"
                   className="w-full bg-red-600 hover:bg-red-700 text-foreground font-medium py-4 rounded-xl shadow-[0_0_20px_rgba(239,68,68,0.3)] transition-all active:scale-[0.98] tracking-wide"
                 >
-                  Execute Global Recall
+                  Recall Batch
                 </button>
               </form>
             </div>
@@ -975,14 +977,14 @@ export default function ManufacturerDashboard() {
         return (
           <div className="max-w-7xl mx-auto animate-fade-in relative z-10">
             <h2 className="text-3xl font-bold tracking-tight text-foreground mb-8">
-              Ledger History
+              Batch History
             </h2>
             <div className="glass-panel border-border rounded-2xl overflow-hidden shadow-2xl">
               <div className="p-6 border-b border-border bg-white/5 flex flex-col sm:flex-row justify-between items-center gap-4">
                 <div className="relative w-full max-w-md">
                   <input
                     type="text"
-                    placeholder="Search ledger entries..."
+                    placeholder="Search batches..."
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                     className="w-full pl-11 pr-4 py-3 bg-card border border-border rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent outline-none text-sm text-foreground placeholder:text-muted-foreground transition-all"
@@ -995,10 +997,10 @@ export default function ManufacturerDashboard() {
                 <table className="w-full text-left text-sm whitespace-nowrap">
                   <thead className="bg-card border-b border-border text-muted-foreground">
                     <tr>
-                      <th className="px-8 py-5 font-semibold uppercase tracking-wider text-xs">Hash / ID</th>
+                      <th className="px-8 py-5 font-semibold uppercase tracking-wider text-xs">Batch ID</th>
                       <th className="px-8 py-5 font-semibold uppercase tracking-wider text-xs">Timestamp</th>
-                      <th className="px-8 py-5 font-semibold uppercase tracking-wider text-xs">Payload Array</th>
-                      <th className="px-8 py-5 font-semibold uppercase tracking-wider text-xs">Consensus Status</th>
+                      <th className="px-8 py-5 font-semibold uppercase tracking-wider text-xs">Medicines</th>
+                      <th className="px-8 py-5 font-semibold uppercase tracking-wider text-xs">Status</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-white/5">
@@ -1041,7 +1043,7 @@ export default function ManufacturerDashboard() {
                           colSpan={4}
                           className="px-8 py-24 text-center text-muted-foreground"
                         >
-                          No cryptographic entries matched your criteria.
+                          No batches matched your criteria.
                         </td>
                       </tr>
                     )}
@@ -1057,13 +1059,13 @@ export default function ManufacturerDashboard() {
           <div className="max-w-6xl mx-auto animate-fade-in relative z-10">
             <h2 className="text-3xl font-bold tracking-tight text-foreground mb-8 flex items-center gap-3">
                <Clock className="w-8 h-8 text-amber-500" />
-               Temporal Risk Analysis
+               Expiry Risk Analysis
             </h2>
             <div className="glass-panel border-border rounded-2xl overflow-hidden shadow-2xl">
               <div className="p-6 border-b border-border bg-amber-500/5">
                 <h3 className="text-sm font-medium text-amber-200 flex items-center gap-2">
                    <AlertTriangle className="w-4 h-4" />
-                   Active compounds deteriorating within a 30-day window
+                   Medicines expiring within 30 days
                 </h3>
               </div>
 
@@ -1071,10 +1073,10 @@ export default function ManufacturerDashboard() {
                 <table className="w-full text-left text-sm whitespace-nowrap">
                   <thead className="bg-card border-b border-border text-muted-foreground">
                     <tr>
-                      <th className="px-8 py-5 font-semibold uppercase tracking-wider text-xs">Parent Node</th>
-                      <th className="px-8 py-5 font-semibold uppercase tracking-wider text-xs">Substance</th>
-                      <th className="px-8 py-5 font-semibold uppercase tracking-wider text-xs">Threshold Date</th>
-                      <th className="px-8 py-5 font-semibold uppercase tracking-wider text-xs">Vector</th>
+                      <th className="px-8 py-5 font-semibold uppercase tracking-wider text-xs">Batch ID</th>
+                      <th className="px-8 py-5 font-semibold uppercase tracking-wider text-xs">Medicine</th>
+                      <th className="px-8 py-5 font-semibold uppercase tracking-wider text-xs">Expiry Date</th>
+                      <th className="px-8 py-5 font-semibold uppercase tracking-wider text-xs">Status</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-white/5">
@@ -1096,7 +1098,7 @@ export default function ManufacturerDashboard() {
                           <td className="px-8 py-5">
                             {med.daysLeft < 0 ? (
                               <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-red-500/10 text-red-400 border border-red-500/20">
-                                ☠ Payload Expired
+                                Expired
                               </span>
                             ) : med.daysLeft <= 14 ? (
                               <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-orange-500/10 text-orange-400 border border-orange-500/20">
@@ -1117,7 +1119,7 @@ export default function ManufacturerDashboard() {
                           className="px-8 py-24 text-center text-emerald-500/70"
                         >
                            <Activity className="w-8 h-8 mx-auto mb-3 opacity-50" />
-                          System nominal. All registered assets have secure margins.
+                          All medicines are well within their expiry dates.
                         </td>
                       </tr>
                     )}
@@ -1132,25 +1134,25 @@ export default function ManufacturerDashboard() {
         return (
           <div className="max-w-3xl mx-auto animate-fade-in relative z-10">
             <h2 className="text-3xl font-bold tracking-tight text-foreground mb-8">
-              Verification Matrix
+              QR Code Tool
             </h2>
             <div className="glass-panel border-border rounded-2xl p-10 text-center flex flex-col items-center shadow-2xl relative overflow-hidden">
                <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-[100px] pointer-events-none" />
 
               <p className="text-muted-foreground mb-10 max-w-lg leading-relaxed relative z-10">
-                Generate and extract high-fidelity spatial configurations (QR) for active nexus nodes. Used for physical package alignment.
+                Generate and download QR codes for your registered batches to use for physical labeling.
               </p>
 
               <div className="w-full max-w-sm mb-10 text-left relative z-10">
                 <label className="block text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
-                  Target Identity Hash
+                  Batch ID
                 </label>
                 <div className="relative">
                   <input
                     type="text"
                     value={batchId}
                     onChange={(e) => setBatchId(e.target.value)}
-                    placeholder="Enter valid Node ID..."
+                    placeholder="Enter valid Batch ID..."
                     className="w-full pl-11 pr-4 py-4 bg-card border border-border rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent outline-none text-foreground transition-all"
                   />
                   <QrCode className="w-5 h-5 text-muted-foreground absolute left-4 top-1/2 -translate-y-1/2" />
@@ -1173,13 +1175,13 @@ export default function ManufacturerDashboard() {
                     className="flex items-center gap-2 bg-primary hover:bg-primary/90 text-foreground font-medium py-3 px-8 rounded-xl shadow-[0_0_20px_rgba(139,92,246,0.3)] transition-all active:scale-[0.98]"
                   >
                     <Download className="w-5 h-5" />
-                    Extract Vector Graphic
+                    Download QR Code
                   </button>
                 </div>
               ) : (
                 <div className="py-20 text-muted-foreground border-2 border-dashed border-border w-full rounded-2xl relative z-10 bg-card">
                    <QrCode className="w-10 h-10 mx-auto mb-3 opacity-20" />
-                  Awaiting spatial hash input...
+                  Awaiting Batch ID input...
                 </div>
               )}
             </div>
@@ -1220,7 +1222,7 @@ export default function ManufacturerDashboard() {
               PharmaDash
             </h1>
             <span className="text-xs text-primary font-medium uppercase tracking-wider mt-1 block">
-              Node Commander
+              Manufacturer Dashboard
             </span>
           </div>
         </div>
@@ -1288,12 +1290,12 @@ export default function ManufacturerDashboard() {
         <header className="px-10 py-6 border-b border-border flex justify-between items-center shrink-0 z-10 backdrop-blur-md bg-background/50 sticky top-0">
           <div className="flex items-center gap-3">
              <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-             <span className="text-sm font-medium text-emerald-500 tracking-wider uppercase">System Online</span>
+             <span className="text-sm font-medium text-emerald-500 tracking-wider uppercase">Dashboard Active</span>
           </div>
           <div className="flex items-center gap-6">
              <ThemeToggle />
              <div className="text-sm text-muted-foreground">
-                Node ID: <span className="font-mono text-foreground ml-1">#NX-8829</span>
+                Manufacturer ID: <span className="font-mono text-foreground ml-1">#MN-8829</span>
              </div>
           </div>
         </header>

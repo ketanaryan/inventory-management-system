@@ -144,7 +144,7 @@ export default function HospitalDashboard() {
       fetchBatches(user?.id);
 
       setVerificationResult(data);
-      setVerifyMessage(data.status === "Recalled" ? "⚠️ RECALLED: System reject." : "✅ Authentic: Hash Verified & Added to Vault.");
+      setVerifyMessage(data.status === "Recalled" ? "⚠️ RECALLED: Batch rejected." : "✅ Authentic: Batch Verified & Added to Inventory.");
     }
   };
 
@@ -170,7 +170,7 @@ export default function HospitalDashboard() {
         <div className="flex flex-col items-center gap-4 animate-pulse">
           <Activity className="w-10 h-10 text-primary animate-spin" />
           <div className="text-xl font-medium tracking-tight">
-            Connecting to PharmaChain Secure Node...
+            Connecting to Hospital Dashboard...
           </div>
         </div>
       </div>
@@ -181,7 +181,7 @@ export default function HospitalDashboard() {
     { id: "Dashboard", icon: <LayoutDashboard size={20}/>, label: "Overview" },
     { id: "Batch Verification", icon: <CheckCircle size={20}/>, label: "Verify Batch" },
     { id: "Medicine Inventory", icon: <Package size={20}/>, label: "Inventory Data" },
-    { id: "Expiry Alerts", icon: <Bell size={20}/>, label: "Expiry Matrix", count: processedData.expiringSoon.length },
+    { id: "Expiry Alerts", icon: <Bell size={20}/>, label: "Expiry Alerts", count: processedData.expiringSoon.length },
     { id: "Recall Alerts", icon: <AlertTriangle size={20}/>, label: "Recall Alerts", count: processedData.recalled.length },
     { id: "Alternatives", icon: <Search size={20}/>, label: "AI Alternatives" },
   ];
@@ -204,7 +204,7 @@ export default function HospitalDashboard() {
             </div>
             <div>
               <h1 className="text-xl font-bold tracking-tight leading-none text-foreground">PharmaDash</h1>
-              <span className="text-xs text-blue-400 font-medium uppercase tracking-wider mt-1 lg:block hidden">Hospital Node</span>
+              <span className="text-xs text-blue-400 font-medium uppercase tracking-wider mt-1 lg:block hidden">Hospital Dashboard</span>
             </div>
           </div>
         </div>
@@ -256,7 +256,7 @@ export default function HospitalDashboard() {
           <div className="flex items-center gap-4">
             <ThemeToggle />
             <div className="text-sm text-muted-foreground bg-card border border-border px-4 py-2 rounded-full font-medium">
-              Terminal User: <span className="text-foreground ml-1">{user?.email}</span>
+              Active User: <span className="text-foreground ml-1">{user?.email}</span>
             </div>
           </div>
         </header>
@@ -268,9 +268,9 @@ export default function HospitalDashboard() {
             <div className="space-y-8 animate-fade-in relative z-10 pb-16 w-full">
               <h2 className="text-3xl font-bold tracking-tight text-foreground mb-8">Facility Overview</h2>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <StatCard title="Total Network Stock" value={processedData.inventory.length} icon={<Package className="text-blue-500 w-8 h-8"/>} textColor="text-blue-400" bgColor="bg-blue-500/10" borderColor="border-blue-500/20" />
+                <StatCard title="Total Inventory" value={processedData.inventory.length} icon={<Package className="text-blue-500 w-8 h-8"/>} textColor="text-blue-400" bgColor="bg-blue-500/10" borderColor="border-blue-500/20" />
                 <StatCard title="Critical Threshold (<30d)" value={processedData.expiringSoon.length} icon={<Clock className="text-amber-500 w-8 h-8"/>} textColor="text-amber-400" bgColor="bg-amber-500/10" borderColor="border-amber-500/20" />
-                <StatCard title="Compromised Nodes" value={processedData.recalled.length} icon={<AlertTriangle className="text-red-500 w-8 h-8"/>} textColor="text-red-400" bgColor="bg-red-500/10" borderColor="border-red-500/20" />
+                <StatCard title="Recalled Batches" value={processedData.recalled.length} icon={<AlertTriangle className="text-red-500 w-8 h-8"/>} textColor="text-red-400" bgColor="bg-red-500/10" borderColor="border-red-500/20" />
               </div>
 
               {/* Predictive Restock Simulator */}
@@ -282,13 +282,13 @@ export default function HospitalDashboard() {
                        <Activity className="w-5 h-5" />
                     </div>
                     <div>
-                      <h3 className="text-sm font-bold text-foreground tracking-wide uppercase">AI Restock Nexus</h3>
-                      <p className="text-[10px] text-primary font-bold tracking-widest uppercase mt-0.5">Predictive Consumption Models</p>
+                      <h3 className="text-sm font-bold text-foreground tracking-wide uppercase">AI Inventory Insights</h3>
+                      <p className="text-[10px] text-primary font-bold tracking-widest uppercase mt-0.5">Predictive Restock Models</p>
                     </div>
                   </div>
                   <span className="bg-primary/20 text-primary px-3 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider border border-primary/30 flex items-center gap-2">
                     <span className="w-1.5 h-1.5 rounded-full bg-primary animate-ping" />
-                    Active Simulation
+                    Active Analysis
                   </span>
                 </div>
                 
@@ -322,9 +322,9 @@ export default function HospitalDashboard() {
 
               <div className="glass-panel rounded-2xl border border-border shadow-2xl overflow-hidden mt-8">
                 <div className="p-6 border-b border-border bg-white/5 flex justify-between items-center">
-                  <h3 className="font-semibold text-foreground tracking-wide uppercase text-sm">Live Vault Stock</h3>
+                  <h3 className="font-semibold text-foreground tracking-wide uppercase text-sm">Live Inventory</h3>
                   <button onClick={() => fetchBatches(user?.id)} className="text-xs font-bold text-primary hover:text-primary/80 transition-colors uppercase tracking-wider flex items-center gap-1">
-                    <Activity className="w-3 h-3" /> Sync Ledger
+                    <Activity className="w-3 h-3" /> Sync Inventory
                   </button>
                 </div>
                 <InventoryTable data={processedData.inventory.slice(0, 10)} />
@@ -335,20 +335,20 @@ export default function HospitalDashboard() {
           {/* 2. VERIFICATION */}
           {activeTab === "Batch Verification" && (
              <div className="max-w-2xl mx-auto animate-fade-in relative z-10">
-              <h2 className="text-3xl font-bold tracking-tight text-foreground mb-8 text-center">Protocol Verification</h2>
+              <h2 className="text-3xl font-bold tracking-tight text-foreground mb-8 text-center">Batch Verification</h2>
               <div className="glass-panel p-10 rounded-3xl border border-border shadow-[0_0_50px_rgba(0,0,0,0.5)] text-center relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-[100px] pointer-events-none" />
-                <p className="text-muted-foreground mb-8">Query the distributed ledger to authenticate spatial payload identifiers.</p>
+                <p className="text-muted-foreground mb-8">Scan or enter the Batch ID to verify its authenticity and add to your inventory.</p>
                 <form onSubmit={handleVerify} className="space-y-6 relative z-10">
                   <input
                     type="text"
-                    placeholder="ENTER HASH (E.G. BATCH-2026-X)"
+                    placeholder="ENTER BATCH ID (E.G. BATCH-2026-X)"
                     value={batchIdInput}
                     onChange={(e) => setBatchIdInput(e.target.value)}
                     className="w-full p-4 bg-card border border-border rounded-xl text-center text-lg font-mono outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-foreground placeholder:text-muted-foreground transition-all uppercase tracking-widest"
                   />
                   <button className="w-full bg-primary hover:bg-primary/90 text-foreground py-4 rounded-xl shadow-[0_0_20px_rgba(139,92,246,0.3)] transition-all active:scale-[0.98] tracking-wide font-medium">
-                    Run Authenticity Check
+                    Verify Batch
                   </button>
                 </form>
 
@@ -376,7 +376,7 @@ export default function HospitalDashboard() {
           {activeTab === "Medicine Inventory" && (
             <div className="glass-panel rounded-2xl border border-border shadow-2xl overflow-hidden animate-fade-in relative z-10">
               <div className="p-6 border-b border-border bg-white/5">
-                <h3 className="font-semibold text-foreground tracking-wide uppercase text-sm">Complete Vault Inventory</h3>
+                <h3 className="font-semibold text-foreground tracking-wide uppercase text-sm">Complete Inventory</h3>
               </div>
               <InventoryTable data={processedData.inventory} />
             </div>
@@ -386,7 +386,7 @@ export default function HospitalDashboard() {
           {activeTab === "Expiry Alerts" && (
             <div className="max-w-5xl mx-auto animate-fade-in relative z-10">
                <h2 className="text-3xl font-bold tracking-tight text-foreground mb-8 flex items-center gap-3">
-                 <Clock className="w-8 h-8 text-amber-500" /> Temporal Decay Vectors
+                 <Clock className="w-8 h-8 text-amber-500" /> Expiry Alerts
               </h2>
               <div className="grid grid-cols-1 gap-4">
                 {processedData.expiringSoon.length === 0 ? (
@@ -404,12 +404,12 @@ export default function HospitalDashboard() {
           {activeTab === "Recall Alerts" && (
             <div className="max-w-5xl mx-auto animate-fade-in relative z-10">
                <h2 className="text-3xl font-bold tracking-tight text-foreground mb-8 flex items-center gap-3">
-                 <ShieldAlert className="w-8 h-8 text-red-500" /> Compromised Vectors
+                 <ShieldAlert className="w-8 h-8 text-red-500" /> Recalled Batches
               </h2>
               <div className="grid grid-cols-1 gap-4">
                 {processedData.recalled.length === 0 ? (
                   <div className="glass-panel border border-border p-16 text-center rounded-2xl text-emerald-500/70 text-sm tracking-wider uppercase">
-                     <CheckCircle className="w-8 h-8 mx-auto mb-3 opacity-50" /> Vault secure. No compromised instances.
+                     <CheckCircle className="w-8 h-8 mx-auto mb-3 opacity-50" /> Inventory secure. No recalled batches.
                   </div>
                 ) : 
                   processedData.recalled.map((item, i) => <AlertCard key={i} item={item} type="recall" />)
@@ -485,9 +485,9 @@ export default function HospitalDashboard() {
                                 </div>
                               </div>
                               {stockCount > 0 ? (
-                                <span className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-4 py-1.5 rounded-full font-bold text-xs tracking-wider uppercase">Vault Stock: {stockCount}</span>
+                                <span className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-4 py-1.5 rounded-full font-bold text-xs tracking-wider uppercase">Inventory: {stockCount}</span>
                               ) : (
-                                <span className="bg-red-500/10 text-red-500/70 border border-red-500/20 px-4 py-1.5 rounded-full font-bold text-xs tracking-wider uppercase">Not in Vault</span>
+                                <span className="bg-red-500/10 text-red-500/70 border border-red-500/20 px-4 py-1.5 rounded-full font-bold text-xs tracking-wider uppercase">Not in Inventory</span>
                               )}
                             </div>
                           );
@@ -528,11 +528,11 @@ function InventoryTable({ data }: { data: any[] }) {
       <table className="w-full text-left whitespace-nowrap">
         <thead>
           <tr className="bg-card text-muted-foreground text-[10px] uppercase font-bold tracking-widest border-b border-border">
-            <th className="px-8 py-5">Substance String</th>
-            <th className="px-8 py-5">Hash ID</th>
-            <th className="px-8 py-5">Volume</th>
-            <th className="px-8 py-5">Decay Threshold</th>
-            <th className="px-8 py-5">Integrity</th>
+            <th className="px-8 py-5">Medicine</th>
+            <th className="px-8 py-5">Batch ID</th>
+            <th className="px-8 py-5">Quantity</th>
+            <th className="px-8 py-5">Expiry Date</th>
+            <th className="px-8 py-5">Status</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-white/5">
@@ -558,7 +558,7 @@ function InventoryTable({ data }: { data: any[] }) {
               </td>
             </tr>
           )) : (
-            <tr><td colSpan={5} className="py-12 text-center text-muted-foreground text-sm uppercase tracking-wider">No active ledger details.</td></tr>
+            <tr><td colSpan={5} className="py-12 text-center text-muted-foreground text-sm uppercase tracking-wider">No active inventory details.</td></tr>
           )}
         </tbody>
       </table>
@@ -584,14 +584,14 @@ function AlertCard({ item, type }: { item: any, type: 'expiry' | 'recall' }) {
         </div>
         <div>
           <h4 className="font-bold text-foreground text-lg capitalize">{item.name}</h4>
-          <p className="text-xs text-muted-foreground uppercase tracking-widest mt-1">Hash Ref: <span className="text-primary font-mono">{item.batch_id}</span></p>
+          <p className="text-xs text-muted-foreground uppercase tracking-widest mt-1">Batch ID: <span className="text-primary font-mono">{item.batch_id}</span></p>
         </div>
       </div>
       <div className="text-right relative z-10">
         <p className={`font-black text-xl tracking-wide uppercase ${isRecall ? 'text-red-400' : 'text-amber-500'}`}>
-          {isRecall ? 'COMPROMISED' : 'DECAYING'}
+          {isRecall ? 'RECALLED' : 'EXPIRING'}
         </p>
-        <p className="text-xs font-medium text-muted-foreground uppercase tracking-widest mt-1">Event: {new Date(item.expiryDate).toLocaleDateString()}</p>
+        <p className="text-xs font-medium text-muted-foreground uppercase tracking-widest mt-1">Expiry Date: {new Date(item.expiryDate).toLocaleDateString()}</p>
       </div>
     </div>
   );

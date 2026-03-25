@@ -383,7 +383,7 @@ export default function ConsumerDashboard() {
             <div className="glass-panel p-4 rounded-2xl flex flex-col items-center justify-center border border-border">
               <Activity className="text-primary mb-2" size={20} />
               <span className="text-2xl font-black">{totalScans}</span>
-              <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-bold text-center mt-1">Total Verified</span>
+              <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-bold text-center mt-1">Total Scanned</span>
             </div>
             <div className="glass-panel p-4 rounded-2xl flex flex-col items-center justify-center border border-border">
               <ShieldCheck className="text-emerald-500 mb-2" size={20} />
@@ -407,7 +407,7 @@ export default function ConsumerDashboard() {
 
           {activeTab === "verify" && (
             <div className="glass-panel p-8 rounded-3xl border border-border shadow-2xl animate-fade-in">
-              <h2 className="text-xl font-bold mb-8 text-center uppercase tracking-tighter italic">Product Handshake</h2>
+              <h2 className="text-xl font-bold mb-8 text-center uppercase tracking-tighter italic">Product Verification</h2>
               
               <div className="flex flex-col sm:flex-row gap-2 mb-4">
                 <button 
@@ -422,7 +422,7 @@ export default function ConsumerDashboard() {
                 <form onSubmit={handleVerify} className="flex-1 flex gap-2">
                   <input
                     type="text"
-                    placeholder="ENTER BATCH IDENTIFIER"
+                    placeholder="ENTER BATCH ID"
                     value={batchId}
                     onChange={(e) => setBatchId(e.target.value)}
                     className="w-full px-5 py-4 bg-card border border-border rounded-xl focus:ring-2 focus:ring-primary outline-none text-foreground font-mono text-sm"
@@ -475,7 +475,7 @@ export default function ConsumerDashboard() {
 
           {activeTab === "history" && (
             <div className="glass-panel p-6 md:p-8 rounded-3xl border border-border shadow-2xl h-[500px] md:h-[580px] overflow-y-auto">
-              <h2 className="text-xl font-bold mb-6 flex items-center gap-2 italic uppercase tracking-tighter"><Bookmark size={20}/> Secured Cabinet</h2>
+              <h2 className="text-xl font-bold mb-6 flex items-center gap-2 italic uppercase tracking-tighter"><Bookmark size={20}/> My Medicines</h2>
               <div className="space-y-3">
                 {verificationHistory.length === 0 ? (
                   <p className="text-center text-muted-foreground py-20 text-xs italic font-medium">Your medicine history is currently empty.</p>
@@ -489,7 +489,7 @@ export default function ConsumerDashboard() {
                         <button 
                           onClick={(e) => { 
                             e.stopPropagation(); 
-                            alert(`Report filed for Phase-IV monitoring: Batch ${item.batch_id}. Our team will investigate.`); 
+                            alert(`Report filed for investigation: Batch ${item.batch_id}. Our team will investigate.`); 
                           }} 
                           className="text-muted-foreground hover:text-orange-500 opacity-0 group-hover:opacity-100 transition-all"
                           title="Report Issue"
