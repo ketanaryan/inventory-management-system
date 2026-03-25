@@ -1188,6 +1188,24 @@ export default function ManufacturerDashboard() {
           </div>
         );
 
+      case "Settings":
+        return (
+          <div className="max-w-2xl mx-auto space-y-8 animate-fade-in relative z-10 text-center py-10">
+             <div className="w-20 h-20 bg-primary/20 text-primary mx-auto rounded-full flex items-center justify-center mb-6 border border-primary/30">
+               <Download size={40} />
+             </div>
+             <h2 className="text-3xl font-bold tracking-tight text-foreground">Install App (.APK / PWA)</h2>
+             <p className="text-muted-foreground text-lg mb-8">Install the PharmaVerify platform on your device for quick access and offline QR scanning capabilities.</p>
+             
+             <button 
+               onClick={() => window.dispatchEvent(new Event("trigger-install"))}
+               className="bg-primary hover:bg-primary/90 text-white font-bold py-4 px-10 rounded-xl shadow-[0_0_20px_rgba(139,92,246,0.3)] transition-all text-lg"
+             >
+               Download & Install App
+             </button>
+          </div>
+        );
+
       default:
         return null;
     }
@@ -1200,6 +1218,7 @@ export default function ManufacturerDashboard() {
     { name: "Batch History", icon: <History className="w-5 h-5" /> },
     { name: "Expiry Alerts", icon: <Clock className="w-5 h-5" /> },
     { name: "QR Tools", icon: <QrCode className="w-5 h-5" /> },
+    { name: "Settings", icon: <Download className="w-5 h-5" /> },
   ];
 
   return (

@@ -8,9 +8,10 @@ import { User } from "@supabase/supabase-js";
 import ThemeToggle from "@/components/ThemeToggle";
 import { 
   LayoutDashboard, CheckCircle, Package, 
-  AlertTriangle, Bell, Search, LogOut, Activity, FlaskConical, Clock, ShieldAlert
+  AlertTriangle, Bell, Search, LogOut, Activity, FlaskConical, Clock, ShieldAlert, Download
 } from "lucide-react";
 import { getMedicineAlternatives } from "@/app/actions/getMedicineAlternatives";
+import { saveScanOffline, getPendingScans, clearPendingScans } from "@/lib/offlineSync";
 
 export default function HospitalDashboard() {
   const router = useRouter();
@@ -41,6 +42,31 @@ export default function HospitalDashboard() {
     };
     checkUser();
   }, [router]);
+
+  // Offline Sync Listener
+  useEffect(() => {
+    const handleOnline = async () => {
+      if (!user) return;
+      try {
+        const pending = await getPendingScans();
+        if (pending.length > 0) {
+          const inserts = pending.map(p => ({ user_id: p.userId, batch_id: p.batchId }));
+          await supabase.from("user_scans").insert(inserts);
+          await clearPendingScans();
+          fetchBatches(user.id);
+          alert("📶 You are back online! Your offline scans have been synchronized with the network.");
+        }
+      } catch (err) {
+        console.error("Failed to sync offline scans:", err);
+      }
+    };
+
+    window.addEventListener("online", handleOnline);
+    // Initial check just in case we missed it
+    if (navigator.onLine) handleOnline();
+
+    return () => window.removeEventListener("online", handleOnline);
+  }, [user]);
 
   // 2. Fetch User's Scanned Entries and map to 'batches'
   const fetchBatches = async (userIdStr?: string) => {
@@ -128,6 +154,16 @@ export default function HospitalDashboard() {
 
   const handleVerify = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!batchIdInput.trim()) return;
+
+    if (!navigator.onLine) {
+      if (user) await saveScanOffline(user.id, batchIdInput);
+      setVerifyMessage("📶 Offline connection. Scan cached locally and will sync when reconnected.");
+      setVerificationResult({ batch_id: batchIdInput, status: "Pending Sync" });
+      setBatchIdInput("");
+      return;
+    }
+
     setVerifyMessage("Searching ledger...");
     const { data, error } = await supabase
       .from("batches")
@@ -184,6 +220,7 @@ export default function HospitalDashboard() {
     { id: "Expiry Alerts", icon: <Bell size={20}/>, label: "Expiry Alerts", count: processedData.expiringSoon.length },
     { id: "Recall Alerts", icon: <AlertTriangle size={20}/>, label: "Recall Alerts", count: processedData.recalled.length },
     { id: "Alternatives", icon: <Search size={20}/>, label: "AI Alternatives" },
+    { id: "Settings", icon: <Download size={20}/>, label: "Install App" },
   ];
 
   return (
@@ -497,6 +534,24 @@ export default function HospitalDashboard() {
                   )}
                 </div>
               )}
+            </div>
+          )}
+
+          {/* 7. SETTINGS */}
+          {activeTab === "Settings" && (
+            <div className="max-w-2xl mx-auto space-y-8 animate-fade-in relative z-10 text-center py-10">
+               <div className="w-20 h-20 bg-primary/20 text-primary mx-auto rounded-full flex items-center justify-center mb-6 border border-primary/30">
+                 <Download size={40} />
+               </div>
+               <h2 className="text-3xl font-bold tracking-tight text-foreground">Install App (.APK / PWA)</h2>
+               <p className="text-muted-foreground text-lg mb-8">Install the PharmaVerify platform on your device for quick access and offline QR scanning capabilities.</p>
+               
+               <button 
+                 onClick={() => window.dispatchEvent(new Event("trigger-install"))}
+                 className="bg-primary hover:bg-primary/90 text-white font-bold py-4 px-10 rounded-xl shadow-[0_0_20px_rgba(139,92,246,0.3)] transition-all text-lg"
+               >
+                 Download & Install App
+               </button>
             </div>
           )}
 

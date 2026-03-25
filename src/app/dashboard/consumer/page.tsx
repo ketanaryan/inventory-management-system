@@ -9,17 +9,18 @@ import ThemeToggle from "@/components/ThemeToggle";
 import { 
   Search, ShieldCheck, ShieldAlert, LogOut, 
   Navigation, Calendar, Package, Info, Bookmark, Trash2, Clock,
-  Activity, AlertTriangle, Scan, Flag, Sparkles, X
+  Activity, AlertTriangle, Scan, Flag, Sparkles, X, Download
 } from "lucide-react";
 import { Html5QrcodeScanner } from "html5-qrcode";
 import { getMedicineAlternatives } from "@/app/actions/getMedicineAlternatives";
+import { saveScanOffline, getPendingScans, clearPendingScans } from "@/lib/offlineSync";
 
 export default function ConsumerDashboard() {
   const router = useRouter();
 
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<"verify" | "history" | "alternatives">("verify");
+  const [activeTab, setActiveTab] = useState<"verify" | "history" | "alternatives" | "settings">("verify");
   const [isScannerOpen, setIsScannerOpen] = useState(false);
 
   interface AlternativeMedicine { name: string; manufacturer: string; }
@@ -76,6 +77,29 @@ export default function ConsumerDashboard() {
     };
     init();
   }, [router]);
+
+  // Offline Sync Listener
+  useEffect(() => {
+    const handleOnline = async () => {
+      if (!user) return;
+      try {
+        const pending = await getPendingScans();
+        if (pending.length > 0) {
+          const inserts = pending.map(p => ({ user_id: p.userId, batch_id: p.batchId }));
+          await supabase.from("user_scans").insert(inserts);
+          await clearPendingScans();
+          await fetchHistory(user.id);
+          alert("📶 You are back online! Your offline scans have been synchronized with the network.");
+        }
+      } catch (err) {
+        console.error("Failed to sync offline scans:", err);
+      }
+    };
+
+    window.addEventListener("online", handleOnline);
+    if (navigator.onLine) handleOnline();
+    return () => window.removeEventListener("online", handleOnline);
+  }, [user]);
 
   // FIXED: Manual Join to prevent "Relationship not found" error
   const fetchHistory = async (userId: string) => {
@@ -274,6 +298,15 @@ export default function ConsumerDashboard() {
     e.preventDefault();
     if(!batchId.trim()) return;
 
+    if (!navigator.onLine) {
+      if (user) await saveScanOffline(user.id, batchId);
+      setMessage("📶 Offline connection. Scan cached locally and will sync when reconnected.");
+      setMessageType("success");
+      setResult({ batch_id: batchId, status: "Pending Sync" });
+      setBatchId("");
+      return;
+    }
+
     setResult(null);
     setMessage("Scanning Ledger...");
     setMessageType("");
@@ -397,11 +430,14 @@ export default function ConsumerDashboard() {
             </div>
           </div>
 
-          <div className="flex gap-2 p-1 bg-card/50 border border-border rounded-2xl">
-            <button onClick={() => setActiveTab("verify")} className={`flex-1 py-2 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all ${activeTab === "verify" ? "bg-primary text-white" : "text-muted-foreground"}`}>Verify Scan</button>
-            <button onClick={() => setActiveTab("history")} className={`flex-1 py-2 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all ${activeTab === "history" ? "bg-primary text-white" : "text-muted-foreground"}`}>My Cabinet</button>
-            <button onClick={() => setActiveTab("alternatives")} className={`flex-1 py-2 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all flex items-center justify-center gap-1 ${activeTab === "alternatives" ? "bg-primary text-white shadow-lg shadow-primary/20" : "text-muted-foreground"}`}>
+          <div className="flex gap-2 p-1 bg-card/50 border border-border rounded-2xl overflow-x-auto custom-scrollbar flex-nowrap shrink-0">
+            <button onClick={() => setActiveTab("verify")} className={`min-w-fit px-4 py-2 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all ${activeTab === "verify" ? "bg-primary text-white" : "text-muted-foreground"}`}>Verify Scan</button>
+            <button onClick={() => setActiveTab("history")} className={`min-w-fit px-4 py-2 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all ${activeTab === "history" ? "bg-primary text-white" : "text-muted-foreground"}`}>My Cabinet</button>
+            <button onClick={() => setActiveTab("alternatives")} className={`min-w-fit px-4 py-2 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all flex items-center justify-center gap-1 ${activeTab === "alternatives" ? "bg-primary text-white shadow-lg shadow-primary/20" : "text-muted-foreground"}`}>
               <Sparkles size={12} /> AI Guide
+            </button>
+            <button onClick={() => setActiveTab("settings")} className={`min-w-fit px-4 py-2 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all flex items-center justify-center gap-1 ${activeTab === "settings" ? "bg-primary text-white shadow-lg shadow-primary/20" : "text-muted-foreground"}`}>
+              <Download size={12} /> Install PWA
             </button>
           </div>
 
@@ -609,6 +645,23 @@ export default function ConsumerDashboard() {
                   )}
                 </div>
               )}
+            </div>
+          )}
+
+          {activeTab === "settings" && (
+            <div className="glass-panel p-8 rounded-3xl border border-border shadow-2xl animate-fade-in text-center h-[500px] md:h-[580px] flex flex-col items-center justify-center">
+               <div className="w-20 h-20 bg-primary/20 text-primary rounded-full flex items-center justify-center mb-6 border border-primary/30 shadow-lg shadow-primary/20">
+                 <Download size={40} />
+               </div>
+               <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-foreground mb-4">Install PharmaVerify App</h2>
+               <p className="text-muted-foreground text-sm md:text-base max-w-sm mb-8">Install the app natively on your device for one-tap access and complete offline QR scanning.</p>
+               
+               <button 
+                 onClick={() => window.dispatchEvent(new Event("trigger-install"))}
+                 className="bg-primary hover:bg-primary/90 text-white font-bold py-4 px-10 rounded-xl shadow-[0_0_20px_rgba(139,92,246,0.3)] transition-all flex items-center gap-2"
+               >
+                 <Download size={18} /> Download & Install
+               </button>
             </div>
           )}
         </div>
