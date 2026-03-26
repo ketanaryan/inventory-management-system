@@ -80,6 +80,7 @@ export default function ManufacturerDashboard() {
   // Dealer Orders State
   const [dealerOrders, setDealerOrders] = useState<any[]>([]);
   const [offerQuantity, setOfferQuantity] = useState<{ [key: string]: string }>({});
+  const [offerPrice, setOfferPrice] = useState<{ [key: string]: string }>({});
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -111,7 +112,8 @@ export default function ManufacturerDashboard() {
     try {
       if (action === "respond") {
         const qty = offerQuantity[order.id] || order.requested_quantity;
-        await supabase.from("dealer_orders").update({ status: "Manufacturer Responded", offered_quantity: parseInt(qty) }).eq("id", order.id);
+        const price = offerPrice[order.id] || order.requested_price || 0;
+        await supabase.from("dealer_orders").update({ status: "Manufacturer Responded", offered_quantity: parseInt(qty), offered_price: parseFloat(price) }).eq("id", order.id);
       } else if (action === "dispatch") {
         let remainingToDeduct = order.offered_quantity;
         const newBatches = [...batches];
@@ -1276,7 +1278,7 @@ export default function ManufacturerDashboard() {
                     <tr>
                       <th className="px-6 py-5 uppercase tracking-wider text-xs font-semibold">Dealer / Date</th>
                       <th className="px-6 py-5 uppercase tracking-wider text-xs font-semibold">Medicine</th>
-                      <th className="px-6 py-5 uppercase tracking-wider text-xs font-semibold text-center">Req. Qty</th>
+                      <th className="px-6 py-5 uppercase tracking-wider text-xs font-semibold text-center">Req. Qty / Price</th>
                       <th className="px-6 py-5 uppercase tracking-wider text-xs font-semibold text-center">Available</th>
                       <th className="px-6 py-5 uppercase tracking-wider text-xs font-semibold">Status</th>
                       <th className="px-6 py-5 uppercase tracking-wider text-xs font-semibold text-right">Action</th>
@@ -1292,34 +1294,47 @@ export default function ManufacturerDashboard() {
                           <p className="text-xs text-muted-foreground mt-0.5">{new Date(order.created_at).toLocaleDateString()}</p>
                         </td>
                         <td className="px-6 py-5 font-bold capitalize">{order.medicine_name}</td>
-                        <td className="px-6 py-5 text-center font-bold text-lg">{order.requested_quantity}</td>
+                        <td className="px-6 py-5 text-center">
+                          <div className="font-bold text-lg">{order.requested_quantity}</div>
+                          <div className="text-[11px] text-primary font-bold mt-0.5">₹{order.requested_price || 0} / unit</div>
+                        </td>
                         <td className="px-6 py-5 text-center">
                           <span className={`px-2 py-1 text-xs font-semibold rounded-md ${available >= order.requested_quantity ? 'bg-emerald-500/20 text-emerald-400' : 'bg-red-500/20 text-red-400'}`}>{available}</span>
                         </td>
                         <td className="px-6 py-5">
-                          <span className={`px-3 py-1 text-[11px] uppercase tracking-wider font-bold rounded-full border ${order.status === 'Pending' ? 'text-amber-500 bg-amber-500/10 border-amber-500/20' : 'text-emerald-500 bg-emerald-500/10 border-emerald-500/20'}`}>
-                            {order.status === 'Manufacturer Responded' ? `Offered: ${order.offered_quantity}` : order.status}
+                          <span className={`px-3 py-1 text-[11px] uppercase tracking-wider font-bold rounded-full border flex flex-col items-center max-w-max gap-0.5 ${order.status === 'Pending' ? 'text-amber-500 bg-amber-500/10 border-amber-500/20' : 'text-emerald-500 bg-emerald-500/10 border-emerald-500/20'}`}>
+                            <span>{order.status === 'Manufacturer Responded' ? `Offered: ${order.offered_quantity}` : order.status}</span>
+                            {order.status === 'Manufacturer Responded' && <span className="text-[9px] text-emerald-400">@ ₹{order.offered_price || 0}</span>}
                           </span>
                         </td>
                         <td className="px-6 py-5 text-right flex justify-end gap-2 items-center">
                           {order.status === "Pending" && (
                             <div className="flex gap-2 items-center">
                                {available >= order.requested_quantity ? (
-                                  <button onClick={() => { setOfferQuantity({...offerQuantity, [order.id]: order.requested_quantity.toString()}); setTimeout(() => handleOrderAction(order, 'respond'), 0); }} className="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-lg text-xs font-bold transition-all shadow-lg active:scale-95">Approve Full Request</button>
+                                  <button onClick={() => { setOfferQuantity({...offerQuantity, [order.id]: order.requested_quantity.toString()}); setOfferPrice({...offerPrice, [order.id]: (order.requested_price || 0).toString()}); setTimeout(() => handleOrderAction(order, 'respond'), 0); }} className="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-lg text-xs font-bold transition-all shadow-lg active:scale-95">Approve Full Request</button>
                                ) : (
-                                  <div className="flex bg-white/5 p-1 rounded-lg border border-border">
-                                    <input 
-                                      type="number" 
-                                      placeholder="Offer Qty" 
-                                      value={offerQuantity[order.id] !== undefined ? offerQuantity[order.id] : available}
-                                      onChange={(e) => setOfferQuantity({...offerQuantity, [order.id]: e.target.value})}
-                                      className="w-20 px-2 py-1 text-xs bg-transparent border-none outline-none text-foreground font-bold text-center" 
-                                    />
+                                  <div className="flex flex-col bg-white/5 p-1.5 rounded-xl border border-border gap-1.5">
+                                    <div className="flex gap-1.5">
+                                      <input 
+                                        type="number" 
+                                        placeholder="Qty" 
+                                        value={offerQuantity[order.id] !== undefined ? offerQuantity[order.id] : available}
+                                        onChange={(e) => setOfferQuantity({...offerQuantity, [order.id]: e.target.value})}
+                                        className="w-16 px-2 py-1 text-xs bg-black/20 border border-white/5 rounded-md outline-none text-foreground font-bold text-center" 
+                                      />
+                                      <input 
+                                        type="number" 
+                                        placeholder="Price" 
+                                        value={offerPrice[order.id] !== undefined ? offerPrice[order.id] : (order.requested_price || 0)}
+                                        onChange={(e) => setOfferPrice({...offerPrice, [order.id]: e.target.value})}
+                                        className="w-16 px-2 py-1 text-xs bg-black/20 border border-white/5 rounded-md outline-none text-foreground font-bold text-center" 
+                                      />
+                                    </div>
                                     <button onClick={() => {
-                                      // Default to available if not explicitly set
                                       if (offerQuantity[order.id] === undefined) { offerQuantity[order.id] = available.toString(); }
+                                      if (offerPrice[order.id] === undefined) { offerPrice[order.id] = (order.requested_price || 0).toString(); }
                                       handleOrderAction(order, 'respond');
-                                    }} className="bg-primary hover:bg-primary/90 text-foreground px-3 py-1.5 rounded-md text-xs font-bold uppercase transition-all shadow-lg active:scale-95 ml-1">Offer Partial</button>
+                                    }} className="bg-primary hover:bg-primary/90 text-foreground px-3 py-1.5 rounded-md text-xs font-bold uppercase transition-all shadow-lg active:scale-95 w-full">Offer Partial</button>
                                   </div>
                                )}
                             </div>
@@ -1379,6 +1394,8 @@ export default function ManufacturerDashboard() {
     { name: "Dealer Orders", icon: <Package className="w-5 h-5" /> },
     { name: "Settings", icon: <Download className="w-5 h-5" /> },
   ];
+
+  const pendingOrdersCount = dealerOrders.filter(o => o.status === "Pending" || o.status === "Confirmed By Dealer").length;
 
   return (
     <div className="flex h-screen bg-background text-foreground font-sans overflow-hidden selection:bg-primary/30">
@@ -1443,13 +1460,16 @@ export default function ManufacturerDashboard() {
                 )}
 
                 <span
-                  className={`relative z-10 transition-colors ${
+                  className={`relative z-10 transition-colors flex items-center gap-2 w-full ${
                     isActive ? "text-foreground" : "text-muted-foreground group-hover:text-primary"
                   }`}
                 >
-                  {item.icon}
+                  <span className="shrink-0">{item.icon}</span>
+                  <span className="tracking-wide flex-1 text-left">{item.name}</span>
+                  {item.name === "Dealer Orders" && pendingOrdersCount > 0 && (
+                     <span className="bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-lg shadow-red-500/20">{pendingOrdersCount}</span>
+                  )}
                 </span>
-                <span className="relative z-10 tracking-wide">{item.name}</span>
               </button>
             );
           })}

@@ -21,6 +21,7 @@ export default function DealerDashboard() {
   const [orders, setOrders] = useState<any[]>([]);
   const [medicineName, setMedicineName] = useState("");
   const [quantity, setQuantity] = useState("");
+  const [requestedPrice, setRequestedPrice] = useState("");
   const [message, setMessage] = useState({ text: "", type: "" });
 
   useEffect(() => {
@@ -91,6 +92,7 @@ export default function DealerDashboard() {
         dealer_email: user?.email,
         medicine_name: medicineName,
         requested_quantity: parseInt(quantity),
+        requested_price: parseFloat(requestedPrice) || 0,
         status: "Pending"
       }]);
 
@@ -99,6 +101,7 @@ export default function DealerDashboard() {
       setMessage({ text: "Request sent successfully!", type: "success" });
       setMedicineName("");
       setQuantity("");
+      setRequestedPrice("");
       fetchOrders();
     } catch (err: any) {
       setMessage({ text: err.message || "Failed to submit request", type: "error" });
@@ -112,7 +115,7 @@ export default function DealerDashboard() {
         if (!orderToPay) return;
 
         // Creating checkout session
-        const amount = orderToPay.offered_quantity * 10 || 1000;
+        const amount = orderToPay.offered_quantity * (orderToPay.offered_price || 10) || 1000;
 
         const res = await fetch("/api/create-checkout-session", {
           method: "POST",
@@ -142,6 +145,8 @@ export default function DealerDashboard() {
       updateData = { status: "Confirmed By Dealer" };
     } else if (action === "reject_partial") {
       updateData = { status: "Cancelled" };
+    } else if (action === "mark_delivered") {
+      updateData = { status: "Delivered" };
     }
 
     try {
@@ -163,8 +168,8 @@ export default function DealerDashboard() {
 
   const tabs = [
     { id: "Request Medicine", icon: <ShoppingCart size={20}/>, label: "Request Medicine" },
-    { id: "My Orders", icon: <Package size={20}/>, label: "My Orders", count: orders.filter(o => o.status === "Manufacturer Responded").length },
-    { id: "Payments", icon: <CreditCard size={20}/>, label: "Payments", count: orders.filter(o => o.status === "Shipped" || o.status === "Delivered").length },
+    { id: "My Orders", icon: <Package size={20}/>, label: "My Orders", count: orders.filter(o => o.status === "Manufacturer Responded" || o.status === "Shipped").length },
+    { id: "Payments", icon: <CreditCard size={20}/>, label: "Payments", count: orders.filter(o => o.status === "Delivered").length },
     { id: "Settings", icon: <Download size={20}/>, label: "Install App" },
   ];
 
@@ -301,6 +306,16 @@ export default function DealerDashboard() {
                       className="w-full p-4 bg-card border border-border rounded-xl text-lg outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-foreground placeholder:text-muted-foreground transition-all"
                     />
                   </div>
+                  <div>
+                    <label className="block text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">Expected Price (Per Unit)</label>
+                    <input
+                      type="number"
+                      placeholder="e.g. 10 (INR)"
+                      value={requestedPrice}
+                      onChange={(e) => setRequestedPrice(e.target.value)}
+                      className="w-full p-4 bg-card border border-border rounded-xl text-lg outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-foreground placeholder:text-muted-foreground transition-all"
+                    />
+                  </div>
                   <button className="w-full bg-primary hover:bg-primary/90 text-foreground py-4 rounded-xl shadow-[0_0_20px_rgba(139,92,246,0.3)] transition-all active:scale-[0.98] tracking-wide font-bold uppercase">
                     Submit Request
                   </button>
@@ -334,15 +349,18 @@ export default function DealerDashboard() {
                       <tr key={i} className="hover:bg-muted transition-colors group">
                         <td className="px-8 py-5 text-sm text-muted-foreground font-medium">{new Date(order.created_at).toLocaleDateString()}</td>
                         <td className="px-8 py-5 font-bold text-foreground capitalize">{order.medicine_name}</td>
-                        <td className="px-8 py-5 text-muted-foreground font-medium">{order.requested_quantity} units</td>
                         <td className="px-8 py-5">
-                          <span className={`px-3 py-1.5 rounded-full text-xs font-bold tracking-wider border ${
+                          <p className="text-muted-foreground font-medium">{order.requested_quantity} units</p>
+                          <p className="text-xs text-primary font-bold mt-1">₹{order.requested_price || 0}/unit</p>
+                        </td>
+                        <td className="px-8 py-5">
+                          <span className={`px-3 py-1.5 rounded-full text-[11px] uppercase font-bold tracking-wider border ${
                             order.status === 'Pending' ? 'bg-amber-500/10 text-amber-500 border-amber-500/20' : 
                             order.status === 'Manufacturer Responded' ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' :
                             ['Shipped', 'Delivered', 'Paid', 'Confirmed By Dealer'].includes(order.status) ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
                             'bg-gray-500/10 text-gray-400 border-gray-500/20'
                           }`}>
-                            {order.status === 'Manufacturer Responded' ? (order.offered_quantity >= order.requested_quantity ? 'Stock Available (Full)' : `Partial Stock: ${order.offered_quantity || 0}`) : order.status}
+                            {order.status === 'Manufacturer Responded' ? (order.offered_quantity >= order.requested_quantity ? `Offer: ${order.offered_quantity} @ ₹${order.offered_price || 0}` : `Partial: ${order.offered_quantity || 0} @ ₹${order.offered_price || 0}`) : order.status}
                           </span>
                         </td>
                         <td className="px-8 py-5 text-right">
@@ -352,8 +370,13 @@ export default function DealerDashboard() {
                               <button onClick={() => handleAction(order.id, 'reject_partial')} className="bg-red-500/20 hover:bg-red-500/30 text-red-400 px-4 py-2 rounded-lg text-xs font-bold uppercase transition-colors shadow-lg">Cancel Request</button>
                             </div>
                           )}
+                          {order.status === "Shipped" && (
+                            <div className="flex justify-end gap-2 mt-2">
+                              <button onClick={() => handleAction(order.id, 'mark_delivered')} className="bg-primary hover:bg-primary/90 text-primary-foreground px-4 py-2 rounded-lg text-xs font-bold uppercase transition-colors shadow-lg">Mark Delivered</button>
+                            </div>
+                          )}
                           {order.status === "Pending" && <span className="text-xs text-amber-500 font-medium italic animate-pulse">Checking Availability...</span>}
-                          {['Confirmed By Dealer', 'Shipped', 'Delivered', 'Paid'].includes(order.status) && <span className="text-xs text-emerald-500 font-bold uppercase"><CheckCircle className="w-4 h-4 inline mr-1" /> Processed</span>}
+                          {['Confirmed By Dealer', 'Delivered', 'Paid'].includes(order.status) && <span className="text-xs text-emerald-500 font-bold uppercase"><CheckCircle className="w-4 h-4 inline mr-1" /> Processed</span>}
                         </td>
                       </tr>
                     )) : (
@@ -372,12 +395,12 @@ export default function DealerDashboard() {
                  <CreditCard className="w-8 h-8 text-primary" /> Payment Portal
               </h2>
               <div className="grid grid-cols-1 gap-4">
-                {orders.filter(o => o.status === "Shipped" || o.status === "Delivered" || o.status === "Paid").length === 0 ? (
+                {orders.filter(o => o.status === "Delivered" || o.status === "Paid").length === 0 ? (
                   <div className="glass-panel border border-border p-16 text-center rounded-2xl text-muted-foreground text-sm tracking-wider uppercase">
-                     <CheckCircle className="w-8 h-8 mx-auto mb-3 opacity-50 text-emerald-500" /> No pending invoices.
+                     <CheckCircle className="w-8 h-8 mx-auto mb-3 opacity-50 text-emerald-500" /> No pending invoices (Mark as Delivered first).
                   </div>
                 ) : 
-                orders.filter(o => o.status === "Shipped" || o.status === "Delivered" || o.status === "Paid").map((item, i) => (
+                orders.filter(o => o.status === "Delivered" || o.status === "Paid").map((item, i) => (
                     <div key={i} className="p-6 rounded-2xl flex justify-between items-center shadow-lg border border-border bg-card relative overflow-hidden group">
                        <div className="absolute top-0 right-0 w-32 h-32 blur-[60px] pointer-events-none rounded-full bg-primary/5" />
                       
@@ -393,11 +416,11 @@ export default function DealerDashboard() {
                       <div className="text-right relative z-10 flex items-center gap-6">
                         <div className="text-right">
                           <p className={`font-black tracking-wide uppercase text-sm ${item.status === 'Paid' ? 'text-emerald-500' : 'text-amber-500'}`}>
-                            {item.status}
+                            {item.status} ({item.offered_quantity * (item.offered_price || 10)} INR)
                           </p>
                           <p className="text-xs font-medium text-muted-foreground uppercase tracking-widest mt-1">{new Date(item.created_at).toLocaleDateString()}</p>
                         </div>
-                        {(item.status === "Shipped" || item.status === "Delivered") && (
+                        {item.status === "Delivered" && (
                           <button onClick={() => handleAction(item.id, 'pay')} className="bg-primary hover:bg-primary/80 text-foreground py-2.5 px-6 rounded-xl font-bold text-sm shadow-lg transition-all active:scale-[0.98]">
                             Pay Now
                           </button>
