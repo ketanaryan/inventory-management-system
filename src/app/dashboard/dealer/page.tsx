@@ -34,6 +34,25 @@ export default function DealerDashboard() {
       }
     };
     checkUser();
+
+    // Check for payment redirects from Stripe Callback
+    if (typeof window !== "undefined") {
+      const urlParams = new URLSearchParams(window.location.search);
+      const paymentStatus = urlParams.get("payment");
+      if (paymentStatus === "success") {
+        setMessage({ text: "Payment successful! Your order has been marked as Paid.", type: "success" });
+        setActiveTab("Payments");
+        window.history.replaceState({}, document.title, window.location.pathname);
+      } else if (paymentStatus === "cancelled") {
+        setMessage({ text: "Payment checkout was cancelled.", type: "error" });
+        setActiveTab("Payments");
+        window.history.replaceState({}, document.title, window.location.pathname);
+      } else if (paymentStatus === "error") {
+        setMessage({ text: "Payment verification failed. Please try again or contact support.", type: "error" });
+        setActiveTab("Payments");
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
+    }
   }, [router]);
 
   const fetchOrders = async (userIdStr?: string) => {
@@ -87,13 +106,42 @@ export default function DealerDashboard() {
   };
 
   const handleAction = async (orderId: string, action: string) => {
+    if (action === "pay") {
+      try {
+        const orderToPay = orders.find((o) => o.id === orderId);
+        if (!orderToPay) return;
+
+        // Creating checkout session
+        const amount = orderToPay.offered_quantity * 10 || 1000;
+
+        const res = await fetch("/api/create-checkout-session", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            amount,
+            orderId: orderToPay.id,
+            medicineName: orderToPay.medicine_name,
+          }),
+        });
+
+        const data = await res.json();
+        if (data.url) {
+          window.location.href = data.url;
+          return;
+        } else {
+          throw new Error(data.error || "Failed to initiate payment");
+        }
+      } catch (err: any) {
+        alert("Payment Error: " + err.message);
+        return;
+      }
+    }
+
     let updateData = {};
     if (action === "accept_partial") {
       updateData = { status: "Confirmed By Dealer" };
     } else if (action === "reject_partial") {
       updateData = { status: "Cancelled" };
-    } else if (action === "pay") {
-      updateData = { status: "Paid" };
     }
 
     try {

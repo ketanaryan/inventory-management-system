@@ -15,6 +15,7 @@
     "@google/generative-ai": "^0.24.1",
     "@heroicons/react": "^2.2.0",
     "@phosphor-icons/react": "^2.1.10",
+    "@stripe/stripe-js": "^9.0.0",
     "@supabase/auth-helpers-nextjs": "^0.10.0",
     "@supabase/supabase-js": "^2.57.4",
     "dexie": "^4.3.0",
@@ -24,10 +25,12 @@
     "next": "^16.1.6",
     "next-pwa": "^5.6.0",
     "qrcode.react": "^4.2.0",
+    "razorpay": "^2.9.6",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "react-hook-form": "^7.63.0",
     "recharts": "^3.8.0",
+    "stripe": "^21.0.0",
     "xlsx": "^0.18.5"
   },
   "devDependencies": {
