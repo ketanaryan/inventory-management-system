@@ -1,15 +1,25 @@
 import { NextResponse } from 'next/server';
 import { GoogleGenAI } from '@google/genai';
 
+// CORS configuration for local network and PWA access
+const corsHeaders = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+};
+
+export async function OPTIONS() {
+    return NextResponse.json({}, { headers: corsHeaders });
+}
+
 // Initialize the Gemini client. It will automatically use the GEMINI_API_KEY environment variable.
-// We initialize it inside the handler to prevent Next.js build-time errors if the key is missing.
 
 export async function POST(req: Request) {
   try {
     if (!process.env.GEMINI_API_KEY) {
       return NextResponse.json(
         { insights: ["System Notice: GEMINI_API_KEY not configured. AI capabilities are offline.", "Please add your API key to environment variables to enable Smart Insights."] },
-        { status: 200 }
+        { status: 200, headers: corsHeaders }
       );
     }
 
@@ -45,12 +55,12 @@ export async function POST(req: Request) {
       insights = ["AI generated a response but format was invalid.", "Please review the raw data logs.", "Try regenerating insights."];
     }
 
-    return NextResponse.json({ insights });
+    return NextResponse.json({ insights }, { headers: corsHeaders });
   } catch (error: any) {
     console.error("AI Insights Error:", error);
     return NextResponse.json(
       { insights: ["AI Service Error: " + error.message, "Failed to connect to secure AI node.", "Retrying later..."] },
-      { status: 200 } 
+      { status: 200, headers: corsHeaders } 
     );
   }
 }

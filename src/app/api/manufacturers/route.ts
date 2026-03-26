@@ -1,6 +1,17 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
+// CORS configuration for local network and PWA access
+const corsHeaders = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+};
+
+export async function OPTIONS() {
+    return NextResponse.json({}, { headers: corsHeaders });
+}
+
 export async function GET() {
   try {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -9,7 +20,7 @@ export async function GET() {
     if (!supabaseUrl || !supabaseServiceKey) {
       return NextResponse.json(
         { error: "Configuration error: Missing Supabase Admin credentials in .env.local" },
-        { status: 500 }
+        { status: 500, headers: corsHeaders }
       );
     }
 
@@ -26,7 +37,7 @@ export async function GET() {
 
     if (error) {
       console.error("Error fetching users:", error);
-      return NextResponse.json({ error: error.message }, { status: 400 });
+      return NextResponse.json({ error: error.message }, { status: 400, headers: corsHeaders });
     }
 
     const manufacturers = users
@@ -37,12 +48,12 @@ export async function GET() {
         name: u.user_metadata?.name || u.email,
       }));
 
-    return NextResponse.json({ manufacturers }, { status: 200 });
+    return NextResponse.json({ manufacturers }, { status: 200, headers: corsHeaders });
   } catch (error: any) {
     console.error("Internal Server Error:", error);
     return NextResponse.json(
       { error: error?.message || "An unexpected error occurred." },
-      { status: 500 }
+      { status: 500, headers: corsHeaders }
     );
   }
 }

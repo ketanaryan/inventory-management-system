@@ -1,9 +1,16 @@
-// src/app/api/drug-info/route.ts
 import { GoogleGenAI } from '@google/genai';
 import { NextResponse } from 'next/server';
 
-// Initialize Gemini (key is safely read from server environment)
-// Defined inside the route handler to avoid crash at Next.js build time
+// CORS configuration for local network and PWA access
+const corsHeaders = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+};
+
+export async function OPTIONS() {
+    return NextResponse.json({}, { headers: corsHeaders });
+}
 
 // Define the schema for structured JSON output
 const DrugInfoSchema = {
@@ -35,11 +42,11 @@ export async function POST(request: Request) {
         const { drugName, action } = await request.json();
 
         if (!drugName) {
-            return NextResponse.json({ error: 'Drug name is required' }, { status: 400 });
+            return NextResponse.json({ error: 'Drug name is required' }, { status: 400, headers: corsHeaders });
         }
 
         if (!process.env.GEMINI_API_KEY) {
-            return NextResponse.json({ error: 'GEMINI_API_KEY not configured.' }, { status: 500 });
+            return NextResponse.json({ error: 'GEMINI_API_KEY not configured.' }, { status: 500, headers: corsHeaders });
         }
 
         const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
@@ -69,9 +76,9 @@ Ensure the response is valid JSON and nothing else. No markdown formatting like 
 
             const text = response.text || "";
             // Clean potential markdown from response
-            const cleanJson = text.replace(/\`\`\`json\n?/g, "").replace(/\`\`\`\n?/g, "").trim();
+            const cleanJson = text.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
             
-            return NextResponse.json(JSON.parse(cleanJson));
+            return NextResponse.json(JSON.parse(cleanJson), { headers: corsHeaders });
         }
 
         // Default DrugInfo logic
@@ -92,10 +99,10 @@ Ensure the response is valid JSON and nothing else. No markdown formatting like 
         const jsonText = response.text.trim();
         const drugInfo = JSON.parse(jsonText);
 
-        return NextResponse.json(drugInfo);
+        return NextResponse.json(drugInfo, { headers: corsHeaders });
 
     } catch (error) {
         console.error('Gemini API Error:', error);
-        return NextResponse.json({ error: 'Failed to fetch AI data.' }, { status: 500 });
+        return NextResponse.json({ error: 'Failed to fetch AI data.' }, { status: 500, headers: corsHeaders });
     }
 }
