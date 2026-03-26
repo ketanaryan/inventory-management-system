@@ -493,6 +493,24 @@ export default function ManufacturerDashboard() {
     return null;
   };
 
+  const getAvailableStock = (medicineName: string) => {
+    const orderMedStr = String(medicineName || "").toLowerCase();
+    if (!orderMedStr) return 0;
+    let count = 0;
+    batches.forEach(b => {
+      if (b.status === "Recalled") return;
+      if (Array.isArray(b.medicines)) {
+        b.medicines.forEach((m: any) => {
+          const medNameStr = String(m?.name || "").toLowerCase();
+          if (medNameStr && medNameStr === orderMedStr) {
+            count += parseInt(m.quantity) || 0;
+          }
+        });
+      }
+    });
+    return count;
+  };
+
   if (loadingUser) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-background text-foreground">
@@ -1244,23 +1262,6 @@ export default function ManufacturerDashboard() {
           </div>
         );
 
-    const getAvailableStock = (medicineName: string) => {
-      const orderMedStr = String(medicineName || "").toLowerCase();
-      if (!orderMedStr) return 0;
-      let count = 0;
-      batches.forEach(b => {
-        if (b.status === "Recalled") return;
-        if (Array.isArray(b.medicines)) {
-          b.medicines.forEach((m: any) => {
-            const medNameStr = String(m?.name || "").toLowerCase();
-            if (medNameStr && medNameStr === orderMedStr) {
-              count += parseInt(m.quantity) || 0;
-            }
-          });
-        }
-      });
-      return count;
-    };
 
       case "Dealer Orders":
         return (
