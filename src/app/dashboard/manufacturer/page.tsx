@@ -76,6 +76,10 @@ export default function ManufacturerDashboard() {
   // Data State
   const [batches, setBatches] = useState<any[]>([]);
   const [search, setSearch] = useState("");
+  
+  // Dealer Orders State
+  const [dealerOrders, setDealerOrders] = useState<any[]>([]);
+  const [offerQuantity, setOfferQuantity] = useState<{ [key: string]: string }>({});
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -95,7 +99,46 @@ export default function ManufacturerDashboard() {
 
   useEffect(() => {
     fetchBatches();
+    fetchDealerOrders();
   }, []);
+
+  const fetchDealerOrders = async () => {
+    const { data } = await supabase.from("dealer_orders").select("*").order("created_at", { ascending: false });
+    if (data) setDealerOrders(data);
+  };
+
+  const handleOrderAction = async (order: any, action: string) => {
+    try {
+      if (action === "respond") {
+        const qty = offerQuantity[order.id] || order.requested_quantity;
+        await supabase.from("dealer_orders").update({ status: "Manufacturer Responded", offered_quantity: parseInt(qty) }).eq("id", order.id);
+      } else if (action === "dispatch") {
+        let remainingToDeduct = order.offered_quantity;
+        const newBatches = [...batches];
+        for (let b of newBatches) {
+           if (remainingToDeduct <= 0) break;
+           const medIdx = b.medicines?.findIndex((m: any) => m.name.toLowerCase() === order.medicine_name.toLowerCase());
+           if (medIdx !== undefined && medIdx !== -1) {
+              const available = parseInt(b.medicines[medIdx].quantity);
+              if (available > 0) {
+                 const deduct = Math.min(available, remainingToDeduct);
+                 b.medicines[medIdx].quantity = (available - deduct).toString();
+                 remainingToDeduct -= deduct;
+                 await supabase.from("batches").update({ medicines: b.medicines }).eq("batch_id", b.batch_id);
+              }
+           }
+        }
+        await supabase.from("dealer_orders").update({ status: "Shipped" }).eq("id", order.id);
+        fetchBatches();
+      } else if (action === "deliver") {
+        await supabase.from("dealer_orders").update({ status: "Delivered" }).eq("id", order.id);
+      }
+      fetchDealerOrders();
+    } catch (err) {
+      alert("Action failed. Check console for details.");
+      console.error(err);
+    }
+  };
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -1191,6 +1234,72 @@ export default function ManufacturerDashboard() {
           </div>
         );
 
+      case "Dealer Orders":
+        return (
+          <div className="max-w-6xl mx-auto animate-fade-in relative z-10">
+            <h2 className="text-3xl font-bold tracking-tight text-foreground mb-8 flex items-center gap-3">
+              <Package className="w-8 h-8 text-primary" /> Dealer Orders
+            </h2>
+            <div className="glass-panel border-border rounded-2xl overflow-hidden shadow-2xl">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-sm whitespace-nowrap">
+                  <thead className="bg-card border-b border-border text-muted-foreground">
+                    <tr>
+                      <th className="px-8 py-5 uppercase tracking-wider text-xs font-semibold">Date</th>
+                      <th className="px-8 py-5 uppercase tracking-wider text-xs font-semibold">Dealer Email</th>
+                      <th className="px-8 py-5 uppercase tracking-wider text-xs font-semibold">Medicine</th>
+                      <th className="px-8 py-5 uppercase tracking-wider text-xs font-semibold">Request Qty</th>
+                      <th className="px-8 py-5 uppercase tracking-wider text-xs font-semibold">Status</th>
+                      <th className="px-8 py-5 uppercase tracking-wider text-xs font-semibold text-right">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-white/5">
+                    {dealerOrders.map((order, i) => (
+                      <tr key={i} className="hover:bg-muted transition-colors">
+                        <td className="px-8 py-5 text-muted-foreground font-medium">{new Date(order.created_at).toLocaleDateString()}</td>
+                        <td className="px-8 py-5 font-medium">{order.dealer_email || "Unknown"}</td>
+                        <td className="px-8 py-5 font-bold capitalize">{order.medicine_name}</td>
+                        <td className="px-8 py-5 text-muted-foreground font-medium">{order.requested_quantity}</td>
+                        <td className="px-8 py-5">
+                          <span className={`px-3 py-1 text-[11px] uppercase tracking-wider font-bold rounded-full border ${order.status === 'Pending' ? 'text-amber-500 bg-amber-500/10 border-amber-500/20' : 'text-emerald-500 bg-emerald-500/10 border-emerald-500/20'}`}>
+                            {order.status === 'Manufacturer Responded' ? `Offered: ${order.offered_quantity}` : order.status}
+                          </span>
+                        </td>
+                        <td className="px-8 py-5 text-right flex justify-end gap-2 items-center">
+                          {order.status === "Pending" && (
+                            <div className="flex gap-2 items-center">
+                              <input 
+                                type="number" 
+                                placeholder="Offer Qty" 
+                                defaultValue={order.requested_quantity}
+                                onChange={(e) => setOfferQuantity({...offerQuantity, [order.id]: e.target.value})}
+                                className="w-24 px-3 py-1.5 text-xs bg-white/5 border border-border rounded-lg outline-none focus:ring-1 focus:ring-primary text-foreground" 
+                              />
+                              <button onClick={() => handleOrderAction(order, 'respond')} className="bg-primary hover:bg-primary/90 text-foreground px-4 py-1.5 rounded-lg text-xs font-bold uppercase transition-all shadow-lg active:scale-95">Respond</button>
+                            </div>
+                          )}
+                          {order.status === "Confirmed By Dealer" && (
+                            <button onClick={() => handleOrderAction(order, 'dispatch')} className="bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 px-4 py-2 rounded-lg text-xs font-bold uppercase transition-colors">Dispatch Order</button>
+                          )}
+                          {order.status === "Shipped" && (
+                            <button onClick={() => handleOrderAction(order, 'deliver')} className="bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 px-4 py-2 rounded-lg text-xs font-bold uppercase transition-colors">Mark Delivered</button>
+                          )}
+                          {['Manufacturer Responded', 'Delivered', 'Paid', 'Cancelled'].includes(order.status) && (
+                            <span className="text-xs text-muted-foreground italic">No action req.</span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                    {dealerOrders.length === 0 && (
+                      <tr><td colSpan={6} className="py-16 text-center text-muted-foreground text-sm uppercase tracking-widest">No dealer orders found.</td></tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        );
+
       case "Settings":
         return (
           <div className="max-w-2xl mx-auto space-y-8 animate-fade-in relative z-10 text-center py-10">
@@ -1221,6 +1330,7 @@ export default function ManufacturerDashboard() {
     { name: "Batch History", icon: <History className="w-5 h-5" /> },
     { name: "Expiry Alerts", icon: <Clock className="w-5 h-5" /> },
     { name: "QR Tools", icon: <QrCode className="w-5 h-5" /> },
+    { name: "Dealer Orders", icon: <Package className="w-5 h-5" /> },
     { name: "Settings", icon: <Download className="w-5 h-5" /> },
   ];
 

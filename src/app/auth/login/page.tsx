@@ -34,6 +34,7 @@ export default function LoginPage() {
     if (role === "manufacturer") router.push("/dashboard/manufacturer");
     else if (role === "hospital") router.push("/dashboard/hospital");
     else if (role === "consumer") router.push("/dashboard/consumer");
+    else if (role === "dealer") router.push("/dashboard/dealer");
     else router.push("/dashboard");
   };
 

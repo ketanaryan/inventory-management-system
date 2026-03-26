@@ -8,7 +8,7 @@ import { supabase } from "@/utils/supabase";
 type Inputs = {
   email: string;
   password: string;
-  role: "manufacturer" | "hospital" | "consumer";
+  role: "manufacturer" | "hospital" | "consumer" | "dealer";
 };
 
 export default function SignupPage() {
@@ -104,6 +104,7 @@ export default function SignupPage() {
                 <option value="manufacturer">Medicine Manufacturer</option>
                 <option value="hospital">Hospital / Healthcare Provider</option>
                 <option value="consumer">End Consumer / Patient</option>
+                <option value="dealer">Pharmacy / Dealer</option>
               </select>
               <div className="absolute inset-y-0 right-0 flex items-center pr-4 pointer-events-none text-muted-foreground">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
