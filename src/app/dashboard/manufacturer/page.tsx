@@ -117,7 +117,11 @@ export default function ManufacturerDashboard() {
         const newBatches = [...batches];
         for (let b of newBatches) {
            if (remainingToDeduct <= 0) break;
-           const medIdx = Array.isArray(b.medicines) ? b.medicines.findIndex((m: any) => m?.name && order?.medicine_name && m.name.toLowerCase() === order.medicine_name.toLowerCase()) : -1;
+           const medIdx = Array.isArray(b.medicines) ? b.medicines.findIndex((m: any) => {
+              const medName = String(m?.name || "").toLowerCase();
+              const reqName = String(order?.medicine_name || "").toLowerCase();
+              return medName && reqName && medName === reqName;
+           }) : -1;
            if (medIdx !== undefined && medIdx !== -1) {
               const available = parseInt(b.medicines[medIdx].quantity);
               if (available > 0) {
@@ -1241,13 +1245,15 @@ export default function ManufacturerDashboard() {
         );
 
     const getAvailableStock = (medicineName: string) => {
-      if (!medicineName) return 0;
+      const orderMedStr = String(medicineName || "").toLowerCase();
+      if (!orderMedStr) return 0;
       let count = 0;
       batches.forEach(b => {
         if (b.status === "Recalled") return;
         if (Array.isArray(b.medicines)) {
           b.medicines.forEach((m: any) => {
-            if (m?.name && m.name.toLowerCase() === medicineName.toLowerCase()) {
+            const medNameStr = String(m?.name || "").toLowerCase();
+            if (medNameStr && medNameStr === orderMedStr) {
               count += parseInt(m.quantity) || 0;
             }
           });
