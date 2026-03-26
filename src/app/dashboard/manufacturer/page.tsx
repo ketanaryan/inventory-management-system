@@ -39,6 +39,8 @@ import {
   RefreshCw,
   Zap,
   UploadCloud,
+  Menu,
+  X,
 } from "lucide-react";
 import * as XLSX from "xlsx";
 
@@ -54,6 +56,7 @@ export default function ManufacturerDashboard() {
   const [loadingUser, setLoadingUser] = useState(true);
 
   const [activeTab, setActiveTab] = useState("Dashboard");
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // AI State
   const [insights, setInsights] = useState<string[]>([]);
@@ -1230,20 +1233,33 @@ export default function ManufacturerDashboard() {
         <div className="absolute bottom-[10%] -left-[10%] w-[40%] h-[40%] rounded-full bg-blue-500/10 blur-[120px]" />
       </div>
 
+      {/* Mobile Sidebar Overlay */}
+      {sidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-background/80 backdrop-blur-sm z-40 md:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
       {/* Sidebar */}
-      <aside className="w-72 glass border-r border-border flex flex-col z-20 shrink-0 relative">
-        <div className="p-8 border-b border-border flex items-center">
-          <div className="w-10 h-10 bg-gradient-to-br from-primary to-blue-600 rounded-xl flex items-center justify-center text-foreground font-bold mr-4 shadow-lg shadow-primary/20">
-             <Activity className="w-5 h-5" />
+      <aside className={`fixed md:static inset-y-0 left-0 w-72 glass border-r border-border flex flex-col z-50 transform transition-transform duration-300 ease-in-out ${sidebarOpen ? "translate-x-0" : "-translate-x-full"} md:translate-x-0 shrink-0`}>
+        <div className="p-8 border-b border-border flex items-center justify-between">
+          <div className="flex items-center">
+            <div className="w-10 h-10 bg-gradient-to-br from-primary to-blue-600 rounded-xl flex items-center justify-center text-foreground font-bold mr-4 shadow-lg shadow-primary/20">
+               <Activity className="w-5 h-5" />
+            </div>
+            <div>
+              <h1 className="text-xl font-bold text-foreground tracking-tight leading-none">
+                PharmaDash
+              </h1>
+              <span className="text-xs text-primary font-medium uppercase tracking-wider mt-1 block">
+                Manufacturer Dashboard
+              </span>
+            </div>
           </div>
-          <div>
-            <h1 className="text-xl font-bold text-foreground tracking-tight leading-none">
-              PharmaDash
-            </h1>
-            <span className="text-xs text-primary font-medium uppercase tracking-wider mt-1 block">
-              Manufacturer Dashboard
-            </span>
-          </div>
+          <button onClick={() => setSidebarOpen(false)} className="md:hidden p-2 text-muted-foreground hover:text-foreground">
+             <X className="w-6 h-6" />
+          </button>
         </div>
 
         <nav className="flex-1 overflow-y-auto px-4 py-8 space-y-2">
@@ -1252,7 +1268,10 @@ export default function ManufacturerDashboard() {
             return (
               <button
                 key={item.name}
-                onClick={() => setActiveTab(item.name)}
+                onClick={() => {
+                  setActiveTab(item.name);
+                  setSidebarOpen(false);
+                }}
                 className={`w-full flex items-center gap-4 px-4 py-3.5 text-sm font-medium rounded-xl transition-all duration-300 relative group overflow-hidden ${
                   isActive
                     ? "text-primary-foreground shadow-lg"
@@ -1306,10 +1325,13 @@ export default function ManufacturerDashboard() {
       <div className="flex-1 flex flex-col overflow-hidden relative z-10">
         
         {/* Header */}
-        <header className="px-10 py-6 border-b border-border flex justify-between items-center shrink-0 z-10 backdrop-blur-md bg-background/50 sticky top-0">
+        <header className="px-4 md:px-10 py-6 border-b border-border flex justify-between items-center shrink-0 z-10 backdrop-blur-md bg-background/50 sticky top-0">
           <div className="flex items-center gap-3">
-             <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-             <span className="text-sm font-medium text-emerald-500 tracking-wider uppercase">Dashboard Active</span>
+             <button onClick={() => setSidebarOpen(true)} className="md:hidden p-2 -ml-2 text-muted-foreground hover:text-foreground">
+               <Menu className="w-6 h-6" />
+             </button>
+             <div className="w-2 h-2 rounded-full hidden md:block bg-emerald-500 animate-pulse" />
+             <span className="hidden md:inline text-sm font-medium text-emerald-500 tracking-wider uppercase">Dashboard Active</span>
           </div>
           <div className="flex items-center gap-6">
              <ThemeToggle />

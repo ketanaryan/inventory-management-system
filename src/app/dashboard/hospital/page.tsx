@@ -8,7 +8,7 @@ import { User } from "@supabase/supabase-js";
 import ThemeToggle from "@/components/ThemeToggle";
 import { 
   LayoutDashboard, CheckCircle, Package, 
-  AlertTriangle, Bell, Search, LogOut, Activity, FlaskConical, Clock, ShieldAlert, Download
+  AlertTriangle, Bell, Search, LogOut, Activity, FlaskConical, Clock, ShieldAlert, Download, Menu, X
 } from "lucide-react";
 import { getMedicineAlternatives } from "@/app/actions/getMedicineAlternatives";
 import { saveScanOffline, getPendingScans, clearPendingScans } from "@/lib/offlineSync";
@@ -17,6 +17,7 @@ export default function HospitalDashboard() {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [activeTab, setActiveTab] = useState("Dashboard");
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   
   // Data States
@@ -224,7 +225,7 @@ export default function HospitalDashboard() {
   ];
 
   return (
-    <div className="flex flex-col lg:flex-row min-h-screen bg-background text-foreground font-sans overflow-hidden selection:bg-primary/30">
+    <div className="flex h-screen bg-background text-foreground font-sans overflow-hidden selection:bg-primary/30">
       
       {/* Decorative Background Elements */}
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0">
@@ -232,28 +233,42 @@ export default function HospitalDashboard() {
         <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-primary/10 blur-[120px]" />
       </div>
 
+      {/* Mobile Sidebar Overlay */}
+      {sidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-background/80 backdrop-blur-sm z-40 lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
       {/* SIDEBAR */}
-      <aside className="w-full lg:w-72 glass border-b lg:border-b-0 lg:border-r border-border flex flex-col relative z-20 shrink-0">
-        <div className="p-4 lg:p-8 border-b border-border flex items-center justify-between lg:justify-start">
+      <aside className={`fixed lg:static inset-y-0 left-0 w-72 glass border-r border-border flex flex-col z-50 transform transition-transform duration-300 ease-in-out ${sidebarOpen ? "translate-x-0" : "-translate-x-full"} lg:translate-x-0 shrink-0`}>
+        <div className="p-8 border-b border-border flex items-center justify-between">
           <div className="flex items-center">
             <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-primary rounded-xl flex items-center justify-center text-foreground font-bold mr-4 shadow-lg shadow-blue-500/20">
               <FlaskConical className="w-5 h-5" />
             </div>
             <div>
               <h1 className="text-xl font-bold tracking-tight leading-none text-foreground">PharmaDash</h1>
-              <span className="text-xs text-blue-400 font-medium uppercase tracking-wider mt-1 lg:block hidden">Hospital Dashboard</span>
+              <span className="text-xs text-blue-400 font-medium uppercase tracking-wider mt-1 block">Hospital Dashboard</span>
             </div>
           </div>
+          <button onClick={() => setSidebarOpen(false)} className="lg:hidden p-2 text-muted-foreground hover:text-foreground">
+             <X className="w-6 h-6" />
+          </button>
         </div>
 
-        <nav className="flex-none lg:flex-1 px-4 py-4 lg:py-8 flex flex-row lg:flex-col gap-2 overflow-x-auto lg:overflow-y-auto no-scrollbar">
+        <nav className="flex-1 overflow-y-auto px-4 py-8 space-y-2">
           {tabs.map((item) => {
             const isActive = activeTab === item.id;
             return (
               <button
                 key={item.id}
-                onClick={() => setActiveTab(item.id)}
-                className={`flex-none lg:w-full flex items-center justify-between px-4 py-3.5 rounded-xl transition-all duration-300 relative group overflow-hidden whitespace-nowrap ${
+                onClick={() => {
+                  setActiveTab(item.id);
+                  setSidebarOpen(false);
+                }}
+                className={`w-full flex items-center justify-between px-4 py-3.5 rounded-xl transition-all duration-300 relative group overflow-hidden ${
                   isActive ? "text-primary-foreground shadow-lg" : "text-muted-foreground hover:text-foreground hover:bg-muted"
                 }`}
               >
@@ -276,7 +291,7 @@ export default function HospitalDashboard() {
           })}
         </nav>
 
-        <div className="hidden lg:block p-6 border-t border-border bg-card">
+        <div className="p-6 border-t border-border bg-card">
           <button onClick={handleLogout} className="flex items-center gap-3 text-muted-foreground hover:text-red-400 w-full transition-colors font-medium text-sm">
             <LogOut size={18}/> Terminate Session
           </button>
@@ -285,10 +300,13 @@ export default function HospitalDashboard() {
 
       {/* MAIN CONTENT */}
       <div className="flex-1 flex flex-col relative z-10 w-full overflow-hidden">
-        <header className="px-6 lg:px-10 py-4 lg:py-6 border-b border-border flex justify-between items-center backdrop-blur-md bg-background/50 sticky top-0 shrink-0 z-10">
+        <header className="px-4 lg:px-10 py-4 lg:py-6 border-b border-border flex justify-between items-center backdrop-blur-md bg-background/50 sticky top-0 shrink-0 z-10">
           <div className="flex items-center gap-3">
-             <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-             <h2 className="text-sm tracking-wider uppercase font-bold text-foreground opacity-90">{activeTab}</h2>
+             <button onClick={() => setSidebarOpen(true)} className="lg:hidden p-2 -ml-2 text-muted-foreground hover:text-foreground">
+               <Menu className="w-6 h-6" />
+             </button>
+             <div className="w-2 h-2 rounded-full hidden lg:block bg-emerald-500 animate-pulse" />
+             <h2 className="hidden lg:block text-sm tracking-wider uppercase font-bold text-foreground opacity-90">{activeTab}</h2>
           </div>
           <div className="flex items-center gap-4">
             <ThemeToggle />
