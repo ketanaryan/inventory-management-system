@@ -1234,9 +1234,22 @@ export default function ManufacturerDashboard() {
           </div>
         );
 
+    const getAvailableStock = (medicineName: string) => {
+      let count = 0;
+      batches.forEach(b => {
+        if (b.status === "Recalled") return;
+        b.medicines?.forEach((m: any) => {
+          if (m.name.toLowerCase() === medicineName.toLowerCase()) {
+            count += parseInt(m.quantity) || 0;
+          }
+        });
+      });
+      return count;
+    };
+
       case "Dealer Orders":
         return (
-          <div className="max-w-6xl mx-auto animate-fade-in relative z-10">
+          <div className="max-w-7xl mx-auto animate-fade-in relative z-10">
             <h2 className="text-3xl font-bold tracking-tight text-foreground mb-8 flex items-center gap-3">
               <Package className="w-8 h-8 text-primary" /> Dealer Orders
             </h2>
@@ -1245,53 +1258,70 @@ export default function ManufacturerDashboard() {
                 <table className="w-full text-left text-sm whitespace-nowrap">
                   <thead className="bg-card border-b border-border text-muted-foreground">
                     <tr>
-                      <th className="px-8 py-5 uppercase tracking-wider text-xs font-semibold">Date</th>
-                      <th className="px-8 py-5 uppercase tracking-wider text-xs font-semibold">Dealer Email</th>
-                      <th className="px-8 py-5 uppercase tracking-wider text-xs font-semibold">Medicine</th>
-                      <th className="px-8 py-5 uppercase tracking-wider text-xs font-semibold">Request Qty</th>
-                      <th className="px-8 py-5 uppercase tracking-wider text-xs font-semibold">Status</th>
-                      <th className="px-8 py-5 uppercase tracking-wider text-xs font-semibold text-right">Action</th>
+                      <th className="px-6 py-5 uppercase tracking-wider text-xs font-semibold">Dealer / Date</th>
+                      <th className="px-6 py-5 uppercase tracking-wider text-xs font-semibold">Medicine</th>
+                      <th className="px-6 py-5 uppercase tracking-wider text-xs font-semibold text-center">Req. Qty</th>
+                      <th className="px-6 py-5 uppercase tracking-wider text-xs font-semibold text-center">Available</th>
+                      <th className="px-6 py-5 uppercase tracking-wider text-xs font-semibold">Status</th>
+                      <th className="px-6 py-5 uppercase tracking-wider text-xs font-semibold text-right">Action</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-white/5">
-                    {dealerOrders.map((order, i) => (
+                    {dealerOrders.map((order, i) => {
+                      const available = getAvailableStock(order.medicine_name);
+                      return (
                       <tr key={i} className="hover:bg-muted transition-colors">
-                        <td className="px-8 py-5 text-muted-foreground font-medium">{new Date(order.created_at).toLocaleDateString()}</td>
-                        <td className="px-8 py-5 font-medium">{order.dealer_email || "Unknown"}</td>
-                        <td className="px-8 py-5 font-bold capitalize">{order.medicine_name}</td>
-                        <td className="px-8 py-5 text-muted-foreground font-medium">{order.requested_quantity}</td>
-                        <td className="px-8 py-5">
+                        <td className="px-6 py-5">
+                          <p className="font-medium text-foreground">{order.dealer_email || "Unknown"}</p>
+                          <p className="text-xs text-muted-foreground mt-0.5">{new Date(order.created_at).toLocaleDateString()}</p>
+                        </td>
+                        <td className="px-6 py-5 font-bold capitalize">{order.medicine_name}</td>
+                        <td className="px-6 py-5 text-center font-bold text-lg">{order.requested_quantity}</td>
+                        <td className="px-6 py-5 text-center">
+                          <span className={`px-2 py-1 text-xs font-semibold rounded-md ${available >= order.requested_quantity ? 'bg-emerald-500/20 text-emerald-400' : 'bg-red-500/20 text-red-400'}`}>{available}</span>
+                        </td>
+                        <td className="px-6 py-5">
                           <span className={`px-3 py-1 text-[11px] uppercase tracking-wider font-bold rounded-full border ${order.status === 'Pending' ? 'text-amber-500 bg-amber-500/10 border-amber-500/20' : 'text-emerald-500 bg-emerald-500/10 border-emerald-500/20'}`}>
                             {order.status === 'Manufacturer Responded' ? `Offered: ${order.offered_quantity}` : order.status}
                           </span>
                         </td>
-                        <td className="px-8 py-5 text-right flex justify-end gap-2 items-center">
+                        <td className="px-6 py-5 text-right flex justify-end gap-2 items-center">
                           {order.status === "Pending" && (
                             <div className="flex gap-2 items-center">
-                              <input 
-                                type="number" 
-                                placeholder="Offer Qty" 
-                                defaultValue={order.requested_quantity}
-                                onChange={(e) => setOfferQuantity({...offerQuantity, [order.id]: e.target.value})}
-                                className="w-24 px-3 py-1.5 text-xs bg-white/5 border border-border rounded-lg outline-none focus:ring-1 focus:ring-primary text-foreground" 
-                              />
-                              <button onClick={() => handleOrderAction(order, 'respond')} className="bg-primary hover:bg-primary/90 text-foreground px-4 py-1.5 rounded-lg text-xs font-bold uppercase transition-all shadow-lg active:scale-95">Respond</button>
+                               {available >= order.requested_quantity ? (
+                                  <button onClick={() => { setOfferQuantity({...offerQuantity, [order.id]: order.requested_quantity.toString()}); setTimeout(() => handleOrderAction(order, 'respond'), 0); }} className="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-lg text-xs font-bold transition-all shadow-lg active:scale-95">Approve Full Request</button>
+                               ) : (
+                                  <div className="flex bg-white/5 p-1 rounded-lg border border-border">
+                                    <input 
+                                      type="number" 
+                                      placeholder="Offer Qty" 
+                                      value={offerQuantity[order.id] !== undefined ? offerQuantity[order.id] : available}
+                                      onChange={(e) => setOfferQuantity({...offerQuantity, [order.id]: e.target.value})}
+                                      className="w-20 px-2 py-1 text-xs bg-transparent border-none outline-none text-foreground font-bold text-center" 
+                                    />
+                                    <button onClick={() => {
+                                      // Default to available if not explicitly set
+                                      if (offerQuantity[order.id] === undefined) { offerQuantity[order.id] = available.toString(); }
+                                      handleOrderAction(order, 'respond');
+                                    }} className="bg-primary hover:bg-primary/90 text-foreground px-3 py-1.5 rounded-md text-xs font-bold uppercase transition-all shadow-lg active:scale-95 ml-1">Offer Partial</button>
+                                  </div>
+                               )}
                             </div>
                           )}
                           {order.status === "Confirmed By Dealer" && (
-                            <button onClick={() => handleOrderAction(order, 'dispatch')} className="bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 px-4 py-2 rounded-lg text-xs font-bold uppercase transition-colors">Dispatch Order</button>
+                            <button onClick={() => handleOrderAction(order, 'dispatch')} className="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-lg text-xs font-bold uppercase transition-colors shadow-lg shadow-emerald-500/20">Dispatch Order &rarr; Deduct Stock</button>
                           )}
                           {order.status === "Shipped" && (
-                            <button onClick={() => handleOrderAction(order, 'deliver')} className="bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 px-4 py-2 rounded-lg text-xs font-bold uppercase transition-colors">Mark Delivered</button>
+                            <button onClick={() => handleOrderAction(order, 'deliver')} className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg text-xs font-bold uppercase transition-colors shadow-lg">Mark Delivered</button>
                           )}
                           {['Manufacturer Responded', 'Delivered', 'Paid', 'Cancelled'].includes(order.status) && (
-                            <span className="text-xs text-muted-foreground italic">No action req.</span>
+                            <span className="text-xs text-muted-foreground italic tracking-wide">No action req.</span>
                           )}
                         </td>
                       </tr>
-                    ))}
+                    )})}
                     {dealerOrders.length === 0 && (
-                      <tr><td colSpan={6} className="py-16 text-center text-muted-foreground text-sm uppercase tracking-widest">No dealer orders found.</td></tr>
+                      <tr><td colSpan={6} className="py-16 text-center text-muted-foreground text-sm uppercase tracking-widest">No dealer requests found.</td></tr>
                     )}
                   </tbody>
                 </table>

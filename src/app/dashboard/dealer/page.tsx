@@ -218,11 +218,11 @@ export default function DealerDashboard() {
           {activeTab === "Request Medicine" && (
             <div className="max-w-2xl mx-auto animate-fade-in relative z-10">
               <h2 className="text-3xl font-bold tracking-tight text-foreground mb-8 text-center flex items-center justify-center gap-3">
-                 <Search className="text-primary w-8 h-8" /> Find & Request Stock
+                 <Search className="text-primary w-8 h-8" /> Check Availability & Request Stock
               </h2>
               <div className="glass-panel p-10 rounded-3xl border border-border shadow-[0_0_50px_rgba(0,0,0,0.5)] text-center relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-[100px] pointer-events-none" />
-                <p className="text-muted-foreground mb-8 text-left">Send a request to the manufacturer for medicine restock.</p>
+                <p className="text-muted-foreground mb-8 text-left">Send a request to the manufacturer to check stock availability and initiate an order.</p>
                 
                 {message.text && (
                   <div className={`mb-6 p-4 rounded-xl text-sm font-medium animate-slide-up flex flex-col items-center justify-center border ${
@@ -294,17 +294,17 @@ export default function DealerDashboard() {
                             ['Shipped', 'Delivered', 'Paid', 'Confirmed By Dealer'].includes(order.status) ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
                             'bg-gray-500/10 text-gray-400 border-gray-500/20'
                           }`}>
-                            {order.status === 'Manufacturer Responded' ? `Offered: ${order.offered_quantity || 0}` : order.status}
+                            {order.status === 'Manufacturer Responded' ? (order.offered_quantity >= order.requested_quantity ? 'Stock Available (Full)' : `Partial Stock: ${order.offered_quantity || 0}`) : order.status}
                           </span>
                         </td>
                         <td className="px-8 py-5 text-right">
                           {order.status === "Manufacturer Responded" && (
                             <div className="flex justify-end gap-2">
-                              <button onClick={() => handleAction(order.id, 'accept_partial')} className="bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 px-4 py-2 rounded-lg text-xs font-bold uppercase transition-colors">Accept</button>
-                              <button onClick={() => handleAction(order.id, 'reject_partial')} className="bg-red-500/20 hover:bg-red-500/30 text-red-400 px-4 py-2 rounded-lg text-xs font-bold uppercase transition-colors">Reject</button>
+                              <button onClick={() => handleAction(order.id, 'accept_partial')} className="bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 px-4 py-2 rounded-lg text-xs font-bold uppercase transition-colors shadow-lg">Confirm Order</button>
+                              <button onClick={() => handleAction(order.id, 'reject_partial')} className="bg-red-500/20 hover:bg-red-500/30 text-red-400 px-4 py-2 rounded-lg text-xs font-bold uppercase transition-colors shadow-lg">Cancel Request</button>
                             </div>
                           )}
-                          {order.status === "Pending" && <span className="text-xs text-muted-foreground italic">Awaiting response</span>}
+                          {order.status === "Pending" && <span className="text-xs text-amber-500 font-medium italic animate-pulse">Checking Availability...</span>}
                           {['Confirmed By Dealer', 'Shipped', 'Delivered', 'Paid'].includes(order.status) && <span className="text-xs text-emerald-500 font-bold uppercase"><CheckCircle className="w-4 h-4 inline mr-1" /> Processed</span>}
                         </td>
                       </tr>
