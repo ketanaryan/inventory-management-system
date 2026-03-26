@@ -139,7 +139,7 @@ const getCityFromCoordinates = async (
     centers
       .filter((center: any) =>
         userCity
-          ? userCity.toLowerCase().includes(center.city?.toLowerCase())
+          ? userCity?.toLowerCase().includes(center.city?.toLowerCase() || "")
           : true
       )
       .forEach((center: any) => {
@@ -302,7 +302,7 @@ useEffect(() => {
   const handleFindAlternatives = async (e: React.FormEvent) => {
     e.preventDefault();
     setAlternatives([]);
-    const query = searchQuery.toLowerCase();
+    const query = (searchQuery || "").toLowerCase();
 
     if (query.includes("crocin") || query.includes("paracetamol")) {
       setAlternatives([

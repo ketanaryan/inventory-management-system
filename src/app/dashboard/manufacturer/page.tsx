@@ -117,7 +117,7 @@ export default function ManufacturerDashboard() {
         const newBatches = [...batches];
         for (let b of newBatches) {
            if (remainingToDeduct <= 0) break;
-           const medIdx = b.medicines?.findIndex((m: any) => m.name.toLowerCase() === order.medicine_name.toLowerCase());
+           const medIdx = b.medicines?.findIndex((m: any) => m?.name && order?.medicine_name && m.name.toLowerCase() === order.medicine_name.toLowerCase());
            if (medIdx !== undefined && medIdx !== -1) {
               const available = parseInt(b.medicines[medIdx].quantity);
               if (available > 0) {
@@ -465,7 +465,7 @@ export default function ManufacturerDashboard() {
   expiringMedicines.sort((a, b) => a.daysLeft - b.daysLeft);
 
   const filteredBatches = batches.filter((batch) =>
-    batch.batch_id.toLowerCase().includes(search.toLowerCase())
+    batch?.batch_id?.toLowerCase().includes(search?.toLowerCase() || "")
   );
 
   // Custom Tooltip for Charts
@@ -1235,11 +1235,12 @@ export default function ManufacturerDashboard() {
         );
 
     const getAvailableStock = (medicineName: string) => {
+      if (!medicineName) return 0;
       let count = 0;
       batches.forEach(b => {
         if (b.status === "Recalled") return;
         b.medicines?.forEach((m: any) => {
-          if (m.name.toLowerCase() === medicineName.toLowerCase()) {
+          if (m?.name && m.name.toLowerCase() === medicineName.toLowerCase()) {
             count += parseInt(m.quantity) || 0;
           }
         });

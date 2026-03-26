@@ -525,7 +525,7 @@ export default function HospitalDashboard() {
                       <div className="grid gap-4">
                         {aiResult.alternatives.map((alt: any, i: number) => {
                           // Check if we have this alternative in stock
-                          const inStockMatch = processedData.inventory.find((med: any) => med.name.toLowerCase().includes(alt.name.toLowerCase()));
+                          const inStockMatch = processedData.inventory.find((med: any) => med?.name?.toLowerCase().includes(alt?.name?.toLowerCase()));
                           const stockCount = inStockMatch ? inStockMatch.quantity : 0;
                           
                           return (
