@@ -22,6 +22,8 @@ export default function DealerDashboard() {
   const [medicineName, setMedicineName] = useState("");
   const [quantity, setQuantity] = useState("");
   const [requestedPrice, setRequestedPrice] = useState("");
+  const [manufacturers, setManufacturers] = useState<any[]>([]);
+  const [selectedManufacturer, setSelectedManufacturer] = useState("");
   const [message, setMessage] = useState({ text: "", type: "" });
 
   useEffect(() => {
@@ -32,6 +34,7 @@ export default function DealerDashboard() {
       } else {
         setUser(user);
         fetchOrders(user.id);
+        fetchManufacturers();
       }
     };
     checkUser();
@@ -77,6 +80,18 @@ export default function DealerDashboard() {
     setLoading(false);
   };
 
+  const fetchManufacturers = async () => {
+    try {
+      const res = await fetch("/api/manufacturers");
+      if (res.ok) {
+        const data = await res.json();
+        setManufacturers(data.manufacturers || []);
+      }
+    } catch (err) {
+      console.error("Failed to fetch manufacturers", err);
+    }
+  };
+
   const handleLogout = async () => {
     await supabase.auth.signOut();
     router.push("/auth/login");
@@ -84,12 +99,20 @@ export default function DealerDashboard() {
 
   const handleRequestMedicine = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!medicineName.trim() || !quantity) return;
+    if (!medicineName.trim() || !quantity || !selectedManufacturer) {
+      setMessage({ text: "Please fill all required fields including Manufacturer.", type: "error" });
+      return;
+    }
 
     try {
+      // Find selected manufacturer details
+      const manufacturerObj = manufacturers.find(m => m.id === selectedManufacturer);
+
       const { error } = await supabase.from("dealer_orders").insert([{
         dealer_id: user?.id,
         dealer_email: user?.email,
+        manufacturer_id: selectedManufacturer,
+        manufacturer_email: manufacturerObj?.email || "",
         medicine_name: medicineName,
         requested_quantity: parseInt(quantity),
         requested_price: parseFloat(requestedPrice) || 0,
@@ -286,6 +309,21 @@ export default function DealerDashboard() {
                 )}
 
                 <form onSubmit={handleRequestMedicine} className="space-y-6 relative z-10 text-left">
+                  <div>
+                    <label className="block text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">Target Manufacturer</label>
+                    <select
+                      value={selectedManufacturer}
+                      onChange={(e) => setSelectedManufacturer(e.target.value)}
+                      className="w-full p-4 bg-card border border-border rounded-xl text-lg outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-foreground appearance-none transition-all cursor-pointer"
+                    >
+                      <option value="" disabled className="text-muted-foreground">Select a Manufacturer...</option>
+                      {manufacturers.map((m) => (
+                        <option key={m.id} value={m.id}>
+                          {m.name || m.email}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                   <div>
                     <label className="block text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">Medicine Name</label>
                     <input

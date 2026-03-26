@@ -69,6 +69,9 @@ export default function ManufacturerDashboard() {
   ]);
   const [qrValue, setQrValue] = useState("");
   const [registerMessage, setRegisterMessage] = useState({ text: "", type: "" });
+  
+  // Support multiple batches from Excel
+  const [excelBatches, setExcelBatches] = useState<{ batch_id: string; medicines: MedicineEntry[] }[]>([]);
 
   const [recallBatchId, setRecallBatchId] = useState("");
   const [recallMessage, setRecallMessage] = useState({ text: "", type: "" });
@@ -99,12 +102,18 @@ export default function ManufacturerDashboard() {
   }, [router]);
 
   useEffect(() => {
-    fetchBatches();
-    fetchDealerOrders();
-  }, []);
+    if (user) {
+       fetchBatches();
+       fetchDealerOrders(user.id);
+    }
+  }, [user]);
 
-  const fetchDealerOrders = async () => {
-    const { data } = await supabase.from("dealer_orders").select("*").order("created_at", { ascending: false });
+  const fetchDealerOrders = async (userIdStr?: string) => {
+    const idToUse = userIdStr || user?.id;
+    if (!idToUse) return;
+    
+    // Fetch only orders where this manufacturer is targeted
+    const { data } = await supabase.from("dealer_orders").select("*").eq("manufacturer_id", idToUse).order("created_at", { ascending: false });
     if (data) setDealerOrders(data);
   };
 
@@ -136,8 +145,6 @@ export default function ManufacturerDashboard() {
         }
         await supabase.from("dealer_orders").update({ status: "Shipped" }).eq("id", order.id);
         fetchBatches();
-      } else if (action === "deliver") {
-        await supabase.from("dealer_orders").update({ status: "Delivered" }).eq("id", order.id);
       }
       fetchDealerOrders();
     } catch (err) {
@@ -214,18 +221,18 @@ export default function ManufacturerDashboard() {
       const ws = workbook.Sheets[wsname];
       const data = XLSX.utils.sheet_to_json<any>(ws, { header: 1, raw: false, dateNF: 'yyyy-mm-dd' });
 
-      const parsedMedicines: MedicineEntry[] = [];
+      const groupedBatches: Record<string, MedicineEntry[]> = {};
       
       // Start from row 1, skipping header at 0
+      // Expected: [0]=Batch ID, [1]=Name, [2]=QTY, [3]=Expiry
       for (let i = 1; i < data.length; i++) {
         const row = data[i];
-        if (row && row.length >= 2) {
-          const name = row[0] ? String(row[0]).trim() : "";
-          const quantity = row[1] ? String(row[1]).trim() : "";
-          let expiryDate = row[2] ? String(row[2]).trim() : "";
+        if (row && row.length >= 3) {
+          const rowBatchId = row[0] ? String(row[0]).trim() : "";
+          const name = row[1] ? String(row[1]).trim() : "";
+          const quantity = row[2] ? String(row[2]).trim() : "";
+          let expiryDate = row[3] ? String(row[3]).trim() : "";
 
-          // if date is in mm/dd/yy or similar, simple fallback to parse logic, but raw:false handles most.
-          // Fallback if not matching "yyyy-mm-dd" for HTML date input:
           if (expiryDate && !/^\d{4}-\d{2}-\d{2}$/.test(expiryDate)) {
              try {
                 const d = new Date(expiryDate);
@@ -235,22 +242,23 @@ export default function ManufacturerDashboard() {
              } catch(e) {}
           }
           
-          if (name && quantity && expiryDate) {
-            parsedMedicines.push({ name, quantity, expiryDate });
+          if (rowBatchId && name && quantity && expiryDate) {
+            if (!groupedBatches[rowBatchId]) groupedBatches[rowBatchId] = [];
+            groupedBatches[rowBatchId].push({ name, quantity, expiryDate });
           }
         }
       }
 
-      if (parsedMedicines.length > 0) {
-        const isEmpty = medicines.length === 1 && !medicines[0].name && !medicines[0].quantity && !medicines[0].expiryDate;
-        if (isEmpty) {
-           setMedicines(parsedMedicines);
-        } else {
-           setMedicines([...medicines, ...parsedMedicines]);
-        }
-        setRegisterMessage({ text: "Excel uploaded and mapped successfully!", type: "success" });
+      const batchesArray = Object.keys(groupedBatches).map(key => ({
+         batch_id: key,
+         medicines: groupedBatches[key]
+      }));
+
+      if (batchesArray.length > 0) {
+        setExcelBatches(batchesArray);
+        setRegisterMessage({ text: `Excel uploaded successfully! Found ${batchesArray.length} batch(es). Please review below and submit.`, type: "success" });
       } else {
-        setRegisterMessage({ text: "No valid medicine data found in the Excel file. Please ensure columns are Name, Quantity, ExpiryDate.", type: "error" });
+        setRegisterMessage({ text: "No valid multi-batch data found. Please ensure columns are EXACTLY: Batch ID | Medicine Name | Quantity | Expiry Date.", type: "error" });
       }
     };
     reader.readAsArrayBuffer(file);
@@ -262,42 +270,44 @@ export default function ManufacturerDashboard() {
     setRegisterMessage({ text: "", type: "" });
     setQrValue("");
 
-    if (!batchId.trim()) {
-      setRegisterMessage({ text: "Batch ID is required.", type: "error" });
+    if (!batchId.trim() && excelBatches.length === 0) {
+      setRegisterMessage({ text: "Batch ID is required for manual entry.", type: "error" });
       return;
     }
 
     if (
+      excelBatches.length === 0 &&
       medicines.some(
         (med) => !med.name.trim() || !med.quantity || !med.expiryDate
       )
     ) {
       setRegisterMessage({
-        text: "All medicine fields are required.",
+        text: "All manual medicine fields are required.",
         type: "error",
       });
       return;
     }
 
     try {
-      const { error } = await supabase.from("batches").insert([
-        {
-          batch_id: batchId,
-          status: "Active",
-          medicines: medicines,
-        },
-      ]);
+      const inserts = excelBatches.length > 0 
+        ? excelBatches.map(eb => ({ batch_id: eb.batch_id, status: "Active", medicines: eb.medicines }))
+        : [{ batch_id: batchId, status: "Active", medicines }];
+
+      const { error } = await supabase.from("batches").insert(inserts);
 
       if (error) throw error;
 
-      const verificationUrl = `${window.location.origin}/verify/${batchId}`;
-      setQrValue(verificationUrl);
+      if (excelBatches.length === 0) {
+        const verificationUrl = `${window.location.origin}/verify/${batchId}`;
+        setQrValue(verificationUrl);
+      }
       setRegisterMessage({
-        text: "Batch registered successfully!",
+        text: excelBatches.length > 0 ? `${excelBatches.length} batches registered successfully!` : "Batch registered successfully!",
         type: "success",
       });
       setBatchId("");
       setMedicines([{ name: "", quantity: "", expiryDate: "" }]);
+      setExcelBatches([]);
       fetchBatches();
     } catch (error: any) {
       setRegisterMessage({
@@ -564,7 +574,7 @@ export default function ManufacturerDashboard() {
                <div className="space-y-3 relative z-10">
                  {insights.length > 0 ? (
                    insights.map((insight, idx) => (
-                     <div key={idx} className="p-5 rounded-2xl bg-card border border-border flex items-start gap-4 animate-slide-up shadow-inner" style={{ animationDelay: `${idx * 100}ms` }}>
+                     <div key={idx} className="p-5 rounded-2xl bg-card border border-border flex items-start gap-4 animate-slide-up" style={{ animationDelay: `${idx * 100}ms` }}>
                         <div className="w-7 h-7 rounded-full bg-primary/20 text-primary flex items-center justify-center shrink-0 border border-primary/30 text-xs font-black shadow-[0_0_10px_rgba(139,92,246,0.2)]">
                            {idx + 1}
                         </div>
@@ -891,7 +901,7 @@ export default function ManufacturerDashboard() {
                     </div>
                   </div>
 
-                  {medicines.map((medicine, index) => (
+                  {excelBatches.length === 0 && medicines.map((medicine, index) => (
                     <div
                       key={index}
                       className="bg-card p-6 rounded-xl border border-border relative group transition-all hover:border-primary/30"
@@ -955,20 +965,48 @@ export default function ManufacturerDashboard() {
                                 e.target.value
                               )
                             }
-                            className="w-full px-4 py-3 bg-white/5 text-sm border border-transparent rounded-lg focus:ring-1 focus:ring-primary outline-none text-foreground [color-scheme:dark]"
+                            className="w-full px-4 py-3 bg-white/5 text-sm border border-transparent rounded-lg focus:ring-1 focus:ring-primary outline-none text-foreground color-scheme:dark"
                           />
                         </div>
                       </div>
                     </div>
                   ))}
+
+                  {excelBatches.length > 0 && (
+                    <div className="bg-emerald-500/5 p-6 rounded-2xl border border-emerald-500/20 max-h-96 overflow-y-auto">
+                       <h4 className="text-emerald-400 font-bold mb-4 uppercase tracking-widest text-xs">Excel Multi-Batch Preview:</h4>
+                       {excelBatches.map((eb, idx) => (
+                          <div key={idx} className="mb-4 bg-card p-4 rounded-xl border border-border">
+                             <div className="font-bold text-primary tracking-wide text-lg mb-2">{eb.batch_id}</div>
+                             <div className="space-y-1">
+                                {eb.medicines.map((m, mIdx) => (
+                                   <div key={mIdx} className="flex justify-between text-sm">
+                                      <span className="text-foreground">{m.name}</span>
+                                      <span className="text-muted-foreground">{m.quantity} units | Exp: {new Date(m.expiryDate).toLocaleDateString()}</span>
+                                   </div>
+                                ))}
+                             </div>
+                          </div>
+                       ))}
+                    </div>
+                  )}
                 </div>
 
-                <div className="pt-4">
+                <div className="pt-4 flex gap-4">
+                  {excelBatches.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => setExcelBatches([])}
+                      className="bg-card hover:bg-muted text-muted-foreground font-medium py-4 px-6 rounded-xl border border-border transition-all w-1/3"
+                    >
+                      Clear Excel
+                    </button>
+                  )}
                   <button
                     type="submit"
-                    className="w-full bg-primary hover:bg-primary/90 text-foreground font-medium py-4 rounded-xl shadow-[0_0_20px_rgba(139,92,246,0.3)] transition-all active:scale-[0.98] tracking-wide"
+                    className="flex-1 bg-primary hover:bg-primary/90 text-foreground font-medium py-4 rounded-xl shadow-[0_0_20px_rgba(139,92,246,0.3)] transition-all active:scale-[0.98] tracking-wide"
                   >
-                    Submit Batch
+                    {excelBatches.length > 0 ? "Submit All Batches" : "Submit Batch"}
                   </button>
                 </div>
               </form>
@@ -1311,7 +1349,17 @@ export default function ManufacturerDashboard() {
                           {order.status === "Pending" && (
                             <div className="flex gap-2 items-center">
                                {available >= order.requested_quantity ? (
-                                  <button onClick={() => { setOfferQuantity({...offerQuantity, [order.id]: order.requested_quantity.toString()}); setOfferPrice({...offerPrice, [order.id]: (order.requested_price || 0).toString()}); setTimeout(() => handleOrderAction(order, 'respond'), 0); }} className="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-lg text-xs font-bold transition-all shadow-lg active:scale-95">Approve Full Request</button>
+                                  <div className="flex flex-col bg-white/5 p-2 rounded-xl border border-border gap-2">
+                                     <span className="text-xs text-emerald-400 font-bold">Stock available. Modify price if needed.</span>
+                                     <input 
+                                       type="number" 
+                                       placeholder="Offer Price" 
+                                       value={offerPrice[order.id] !== undefined ? offerPrice[order.id] : (order.requested_price || 0)}
+                                       onChange={(e) => setOfferPrice({...offerPrice, [order.id]: e.target.value})}
+                                       className="w-full px-2 py-1.5 text-xs bg-black/20 border border-white/5 rounded-md outline-none text-foreground font-bold text-center" 
+                                     />
+                                     <button onClick={() => { setOfferQuantity({...offerQuantity, [order.id]: order.requested_quantity.toString()}); setOfferPrice({...offerPrice, [order.id]: offerPrice[order.id] !== undefined ? offerPrice[order.id] : (order.requested_price || 0).toString()}); setTimeout(() => handleOrderAction(order, 'respond'), 0); }} className="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-lg text-xs font-bold transition-all shadow-lg active:scale-95">Approve Full Qty & Price</button>
+                                  </div>
                                ) : (
                                   <div className="flex flex-col bg-white/5 p-1.5 rounded-xl border border-border gap-1.5">
                                     <div className="flex gap-1.5">
@@ -1330,11 +1378,11 @@ export default function ManufacturerDashboard() {
                                         className="w-16 px-2 py-1 text-xs bg-black/20 border border-white/5 rounded-md outline-none text-foreground font-bold text-center" 
                                       />
                                     </div>
-                                    <button onClick={() => {
+                                     <button onClick={() => {
                                       if (offerQuantity[order.id] === undefined) { offerQuantity[order.id] = available.toString(); }
                                       if (offerPrice[order.id] === undefined) { offerPrice[order.id] = (order.requested_price || 0).toString(); }
                                       handleOrderAction(order, 'respond');
-                                    }} className="bg-primary hover:bg-primary/90 text-foreground px-3 py-1.5 rounded-md text-xs font-bold uppercase transition-all shadow-lg active:scale-95 w-full">Offer Partial</button>
+                                    }} className="bg-primary hover:bg-primary/90 text-foreground px-3 py-1.5 rounded-md text-xs font-bold uppercase transition-all shadow-lg active:scale-95 w-full mt-2">Submit Negotiation Offer</button>
                                   </div>
                                )}
                             </div>
@@ -1342,10 +1390,7 @@ export default function ManufacturerDashboard() {
                           {order.status === "Confirmed By Dealer" && (
                             <button onClick={() => handleOrderAction(order, 'dispatch')} className="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-lg text-xs font-bold uppercase transition-colors shadow-lg shadow-emerald-500/20">Dispatch Order &rarr; Deduct Stock</button>
                           )}
-                          {order.status === "Shipped" && (
-                            <button onClick={() => handleOrderAction(order, 'deliver')} className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg text-xs font-bold uppercase transition-colors shadow-lg">Mark Delivered</button>
-                          )}
-                          {['Manufacturer Responded', 'Delivered', 'Paid', 'Cancelled'].includes(order.status) && (
+                          {['Shipped', 'Manufacturer Responded', 'Delivered', 'Paid', 'Cancelled'].includes(order.status) && (
                             <span className="text-xs text-muted-foreground italic tracking-wide">No action req.</span>
                           )}
                         </td>
