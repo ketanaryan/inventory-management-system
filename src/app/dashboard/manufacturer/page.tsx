@@ -117,7 +117,7 @@ export default function ManufacturerDashboard() {
         const newBatches = [...batches];
         for (let b of newBatches) {
            if (remainingToDeduct <= 0) break;
-           const medIdx = b.medicines?.findIndex((m: any) => m?.name && order?.medicine_name && m.name.toLowerCase() === order.medicine_name.toLowerCase());
+           const medIdx = Array.isArray(b.medicines) ? b.medicines.findIndex((m: any) => m?.name && order?.medicine_name && m.name.toLowerCase() === order.medicine_name.toLowerCase()) : -1;
            if (medIdx !== undefined && medIdx !== -1) {
               const available = parseInt(b.medicines[medIdx].quantity);
               if (available > 0) {
@@ -394,13 +394,15 @@ export default function ManufacturerDashboard() {
 
   const medicineCounts: Record<string, number> = {};
   batches.forEach((batch) => {
-    batch.medicines?.forEach((med: MedicineEntry) => {
-      const name = med.name.trim();
-      const qty = Number(med.quantity);
-      if (name && !isNaN(qty)) {
-        medicineCounts[name] = (medicineCounts[name] || 0) + qty;
-      }
-    });
+    if (Array.isArray(batch.medicines)) {
+      batch.medicines.forEach((med: MedicineEntry) => {
+        const name = med?.name?.trim();
+        const qty = Number(med?.quantity);
+        if (name && !isNaN(qty)) {
+          medicineCounts[name] = (medicineCounts[name] || 0) + qty;
+        }
+      });
+    }
   });
   const barChartData = Object.keys(medicineCounts)
     .map((name) => ({
@@ -418,22 +420,24 @@ export default function ManufacturerDashboard() {
   let expiredCount = 0;
 
   batches.forEach((batch) => {
-    batch.medicines?.forEach((med: MedicineEntry) => {
-      if (!med.expiryDate) return;
-      const expDate = new Date(med.expiryDate);
-      const diffTime = expDate.getTime() - today.getTime();
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    if (Array.isArray(batch.medicines)) {
+      batch.medicines.forEach((med: MedicineEntry) => {
+        if (!med?.expiryDate) return;
+        const expDate = new Date(med.expiryDate);
+        const diffTime = expDate.getTime() - today.getTime();
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-      if (diffDays < 0) {
-        expiredCount++;
-      } else if (diffDays <= 30) {
-        criticalCount++;
-      } else if (diffDays <= 90) {
-        expiringSoonCount++;
-      } else {
-        safeCount++;
-      }
-    });
+        if (diffDays < 0) {
+          expiredCount++;
+        } else if (diffDays <= 30) {
+          criticalCount++;
+        } else if (diffDays <= 90) {
+          expiringSoonCount++;
+        } else {
+          safeCount++;
+        }
+      });
+    }
   });
 
   const expiryRiskData = [
@@ -446,21 +450,23 @@ export default function ManufacturerDashboard() {
   // Expiry Alerts Table Data
   const expiringMedicines: any[] = [];
   batches.forEach((batch) => {
-    batch.medicines?.forEach((med: MedicineEntry) => {
-      if (!med.expiryDate) return;
-      const expDate = new Date(med.expiryDate);
-      const diffTime = expDate.getTime() - today.getTime();
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    if (Array.isArray(batch.medicines)) {
+      batch.medicines.forEach((med: MedicineEntry) => {
+        if (!med?.expiryDate) return;
+        const expDate = new Date(med.expiryDate);
+        const diffTime = expDate.getTime() - today.getTime();
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-      if (diffDays <= 30) {
-        expiringMedicines.push({
-          batch_id: batch.batch_id,
-          name: med.name,
-          expiryDate: med.expiryDate,
-          daysLeft: diffDays,
-        });
-      }
-    });
+        if (diffDays <= 30) {
+          expiringMedicines.push({
+            batch_id: batch.batch_id,
+            name: med.name,
+            expiryDate: med.expiryDate,
+            daysLeft: diffDays,
+          });
+        }
+      });
+    }
   });
   expiringMedicines.sort((a, b) => a.daysLeft - b.daysLeft);
 
@@ -1239,11 +1245,13 @@ export default function ManufacturerDashboard() {
       let count = 0;
       batches.forEach(b => {
         if (b.status === "Recalled") return;
-        b.medicines?.forEach((m: any) => {
-          if (m?.name && m.name.toLowerCase() === medicineName.toLowerCase()) {
-            count += parseInt(m.quantity) || 0;
-          }
-        });
+        if (Array.isArray(b.medicines)) {
+          b.medicines.forEach((m: any) => {
+            if (m?.name && m.name.toLowerCase() === medicineName.toLowerCase()) {
+              count += parseInt(m.quantity) || 0;
+            }
+          });
+        }
       });
       return count;
     };
