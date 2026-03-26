@@ -12,7 +12,6 @@ import {
   Activity, AlertTriangle, Scan, Flag, Sparkles, X, Download
 } from "lucide-react";
 import { Html5QrcodeScanner } from "html5-qrcode";
-import { getMedicineAlternatives } from "@/app/actions/getMedicineAlternatives";
 import { saveScanOffline, getPendingScans, clearPendingScans } from "@/lib/offlineSync";
 
 export default function ConsumerDashboard() {
@@ -369,7 +368,18 @@ export default function ConsumerDashboard() {
     setAiError("");
     setAiResult(null);
     try {
-      const result = await getMedicineAlternatives(aiQuery);
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL || "";
+      const res = await fetch(`${baseUrl}/api/drug-info`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ drugName: aiQuery, action: "getAlternatives" }),
+      });
+      
+      if (!res.ok) throw new Error("Failed to fetch alternatives");
+      
+      const result = await res.json();
+      if (result.error) throw new Error(result.error);
+      
       setAiResult(result);
     } catch (err) {
       setAiError(err instanceof Error ? err.message : "Failed to find alternatives");

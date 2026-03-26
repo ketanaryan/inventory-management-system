@@ -32,7 +32,7 @@ const DrugInfoSchema = {
 
 export async function POST(request: Request) {
     try {
-        const { drugName } = await request.json();
+        const { drugName, action } = await request.json();
 
         if (!drugName) {
             return NextResponse.json({ error: 'Drug name is required' }, { status: 400 });
@@ -44,6 +44,37 @@ export async function POST(request: Request) {
 
         const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
+        if (action === "getAlternatives") {
+            const prompt = `
+You are a pharmaceutical expert system.
+Given the following medicine name: "${drugName}", provide its generic alternatives, purpose, and precautions.
+Return the response strictly as a JSON object with this exact structure:
+{
+  "name": "Original Medicine Name",
+  "genericName": "Generic Name(s)",
+  "purpose": "A brief description of what it is used for",
+  "alternatives": [
+    { "name": "Alternative Name 1", "manufacturer": "Manufacturer 1" },
+    { "name": "Alternative Name 2", "manufacturer": "Manufacturer 2" }
+  ],
+  "precautions": ["Precaution 1", "Precaution 2"]
+}
+Limit alternatives to maximum 5 items.
+Ensure the response is valid JSON and nothing else. No markdown formatting like \`\`\`json.
+`;
+            const response = await ai.models.generateContent({
+                model: "gemini-2.5-flash",
+                contents: prompt,
+            });
+
+            const text = response.text || "";
+            // Clean potential markdown from response
+            const cleanJson = text.replace(/\`\`\`json\n?/g, "").replace(/\`\`\`\n?/g, "").trim();
+            
+            return NextResponse.json(JSON.parse(cleanJson));
+        }
+
+        // Default DrugInfo logic
         const prompt = `Analyze the drug '${drugName}'. Provide its description, primary uses, and its main generic alternative. Ensure the output strictly follows the provided JSON schema.`;
 
         const response = await ai.models.generateContent({
@@ -55,7 +86,6 @@ export async function POST(request: Request) {
             }
         });
 
-        // The response text will be a JSON string adhering to DrugInfoSchema
         if (!response.text) {
             throw new Error('No response text received from Gemini API.');
         }
@@ -66,6 +96,6 @@ export async function POST(request: Request) {
 
     } catch (error) {
         console.error('Gemini API Error:', error);
-        return NextResponse.json({ error: 'Failed to fetch drug data from AI service.' }, { status: 500 });
+        return NextResponse.json({ error: 'Failed to fetch AI data.' }, { status: 500 });
     }
 }

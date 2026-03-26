@@ -10,7 +10,6 @@ import {
   LayoutDashboard, CheckCircle, Package, 
   AlertTriangle, Bell, Search, LogOut, Activity, FlaskConical, Clock, ShieldAlert, Download, Menu, X
 } from "lucide-react";
-import { getMedicineAlternatives } from "@/app/actions/getMedicineAlternatives";
 import { saveScanOffline, getPendingScans, clearPendingScans } from "@/lib/offlineSync";
 
 export default function HospitalDashboard() {
@@ -192,7 +191,18 @@ export default function HospitalDashboard() {
     setAiError("");
     setAiResult(null);
     try {
-      const result = await getMedicineAlternatives(searchQuery);
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL || "";
+      const res = await fetch(`${baseUrl}/api/drug-info`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ drugName: searchQuery, action: "getAlternatives" }),
+      });
+      
+      if (!res.ok) throw new Error("Failed to fetch alternatives");
+      
+      const result = await res.json();
+      if (result.error) throw new Error(result.error);
+      
       setAiResult(result);
     } catch (err) {
       setAiError(err instanceof Error ? err.message : "Failed to find alternatives");
