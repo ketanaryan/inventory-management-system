@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState, useEffect, useRef, useMemo } from "react";
 import { supabase } from "@/utils/supabase";
 import { QRCodeCanvas } from "qrcode.react";
+import { logBatchToBlockchain } from "@/lib/blockchain/inventoryChain";
 import ThemeToggle from "@/components/ThemeToggle";
 import { User } from "@supabase/supabase-js";
 import {
@@ -75,6 +76,9 @@ export default function ManufacturerDashboard() {
 
   const [recallBatchId, setRecallBatchId] = useState("");
   const [recallMessage, setRecallMessage] = useState({ text: "", type: "" });
+
+  // Blockchain State
+  const [isBlockchainSigning, setIsBlockchainSigning] = useState(false);
 
   // Data State
   const [batches, setBatches] = useState<any[]>([]);
@@ -173,9 +177,14 @@ export default function ManufacturerDashboard() {
     setLoadingInsights(true);
     setInsights([]);
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
       const res = await fetch("/api/insights", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
         body: JSON.stringify({ inventoryData: batches }),
       });
       const data = await res.json();
@@ -296,13 +305,26 @@ export default function ManufacturerDashboard() {
       const { error } = await supabase.from("batches").insert(inserts);
 
       if (error) throw error;
+      
+      setRegisterMessage({
+        text: "Saving to database... Please confirm the Blockchain transaction in your Wallet/Node.",
+        type: "success",
+      });
+      setIsBlockchainSigning(true);
+
+      let txHash = "";
+      for (const insert of inserts) {
+        const drugName = insert.medicines[0]?.name || "Unknown";
+        txHash = await logBatchToBlockchain(insert.batch_id, insert.batch_id, drugName, "Active");
+      }
+      setIsBlockchainSigning(false);
 
       if (excelBatches.length === 0) {
         const verificationUrl = `${window.location.origin}/verify/${batchId}`;
         setQrValue(verificationUrl);
       }
       setRegisterMessage({
-        text: excelBatches.length > 0 ? `${excelBatches.length} batches registered successfully!` : "Batch registered successfully!",
+        text: excelBatches.length > 0 ? `${excelBatches.length} batches registered & signed! Hash: ${txHash}` : `Batch registered & signed! Hash: ${txHash}`,
         type: "success",
       });
       setBatchId("");
@@ -310,8 +332,9 @@ export default function ManufacturerDashboard() {
       setExcelBatches([]);
       fetchBatches();
     } catch (error: any) {
+      setIsBlockchainSigning(false);
       setRegisterMessage({
-        text: `Failed to register batch: ${
+        text: `Failed to register or sign batch: ${
           error.message || "Conflict or connection issue"
         }`,
         type: "error",
@@ -350,14 +373,25 @@ export default function ManufacturerDashboard() {
       if (updateError) throw updateError;
 
       setRecallMessage({
-        text: `Batch ${recallBatchId} recalled successfully!`,
+        text: "Updating database... Please confirm the Blockchain recall transaction.",
+        type: "success",
+      });
+      setIsBlockchainSigning(true);
+
+      const txHash = await logBatchToBlockchain(recallBatchId, recallBatchId, "Recalled Asset", "Recalled");
+      
+      setIsBlockchainSigning(false);
+
+      setRecallMessage({
+        text: `Batch ${recallBatchId} recalled & signed! Hash: ${txHash}`,
         type: "success",
       });
       setRecallBatchId("");
       fetchBatches();
     } catch (error: any) {
+      setIsBlockchainSigning(false);
       setRecallMessage({
-        text: `Recall failed: ${error.message}`,
+        text: `Recall failed or was rejected: ${error.message}`,
         type: "error",
       });
     }

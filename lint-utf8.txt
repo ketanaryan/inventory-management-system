@@ -1,0 +1,118 @@
+﻿
+> pharma-tracker-frontend@0.1.0 lint
+> eslint
+
+
+C:\Users\KETAN\Downloads\inventory-management-system\src\app\api\confirm-payment\route.ts
+   6:31  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  41:17  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\KETAN\Downloads\inventory-management-system\src\app\api\create-checkout-session\route.ts
+   5:31  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  45:17  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\KETAN\Downloads\inventory-management-system\src\app\api\insights\route.ts
+  59:19  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\KETAN\Downloads\inventory-management-system\src\app\api\manufacturers\route.ts
+  52:19  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\KETAN\Downloads\inventory-management-system\src\app\auth\login\page.tsx
+  105:64  error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+
+C:\Users\KETAN\Downloads\inventory-management-system\src\app\dashboard\consumer\page.tsx
+    6:10  warning  'QRCodeCanvas' is defined but never used                  @typescript-eslint/no-unused-vars
+   36:40  error    Unexpected any. Specify a different type                  @typescript-eslint/no-explicit-any
+   39:66  error    Unexpected any. Specify a different type                  @typescript-eslint/no-explicit-any
+   40:10  warning  'isScanningStatus' is assigned a value but never used     @typescript-eslint/no-unused-vars
+   40:28  warning  'setIsScanningStatus' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  148:14  error    Unexpected any. Specify a different type                  @typescript-eslint/no-explicit-any
+  149:12  error    Unexpected any. Specify a different type                  @typescript-eslint/no-explicit-any
+  157:36  error    Unexpected any. Specify a different type                  @typescript-eslint/no-explicit-any
+  215:44  error    Unexpected any. Specify a different type                  @typescript-eslint/no-explicit-any
+  273:18  warning  'err' is defined but never used                           @typescript-eslint/no-unused-vars
+  278:11  warning  'error' is defined but never used                         @typescript-eslint/no-unused-vars
+  321:14  warning  'err' is defined but never used                           @typescript-eslint/no-unused-vars
+  501:45  error    Unexpected any. Specify a different type                  @typescript-eslint/no-explicit-any
+
+C:\Users\KETAN\Downloads\inventory-management-system\src\app\dashboard\dealer\page.tsx
+    9:3   warning  'LayoutDashboard' is defined but never used                                                                     @typescript-eslint/no-unused-vars
+   10:3   warning  'AlertTriangle' is defined but never used                                                                       @typescript-eslint/no-unused-vars
+   10:18  warning  'Clock' is defined but never used                                                                               @typescript-eslint/no-unused-vars
+   21:40  error    Unexpected any. Specify a different type                                                                        @typescript-eslint/no-explicit-any
+   25:54  error    Unexpected any. Specify a different type                                                                        @typescript-eslint/no-explicit-any
+   60:6   warning  React Hook useEffect has a missing dependency: 'fetchOrders'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  129:19  error    Unexpected any. Specify a different type                                                                        @typescript-eslint/no-explicit-any
+  160:21  error    Unexpected any. Specify a different type                                                                        @typescript-eslint/no-explicit-any
+  179:19  error    Unexpected any. Specify a different type                                                                        @typescript-eslint/no-explicit-any
+
+C:\Users\KETAN\Downloads\inventory-management-system\src\app\dashboard\hospital\page.tsx
+   23:42  error    Unexpected any. Specify a different type                                                                         @typescript-eslint/no-explicit-any
+   25:64  error    Unexpected any. Specify a different type                                                                         @typescript-eslint/no-explicit-any
+   29:44  error    Unexpected any. Specify a different type                                                                         @typescript-eslint/no-explicit-any
+   44:6   warning  React Hook useEffect has a missing dependency: 'fetchBatches'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+   69:6   warning  React Hook useEffect has a missing dependency: 'fetchBatches'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  114:22  error    Unexpected any. Specify a different type                                                                         @typescript-eslint/no-explicit-any
+  115:25  error    Unexpected any. Specify a different type                                                                         @typescript-eslint/no-explicit-any
+  116:21  error    Unexpected any. Specify a different type                                                                         @typescript-eslint/no-explicit-any
+  122:29  error    Unexpected any. Specify a different type                                                                         @typescript-eslint/no-explicit-any
+  536:58  error    Unexpected any. Specify a different type                                                                         @typescript-eslint/no-explicit-any
+  538:83  error    Unexpected any. Specify a different type                                                                         @typescript-eslint/no-explicit-any
+  594:76  error    Unexpected any. Specify a different type                                                                         @typescript-eslint/no-explicit-any
+  608:43  error    Unexpected any. Specify a different type                                                                         @typescript-eslint/no-explicit-any
+  652:44  error    Unexpected any. Specify a different type                                                                         @typescript-eslint/no-explicit-any
+
+C:\Users\KETAN\Downloads\inventory-management-system\src\app\dashboard\manufacturer\page.tsx
+    4:31  warning  'useRef' is defined but never used                                                                                    @typescript-eslint/no-unused-vars
+    4:39  warning  'useMemo' is defined but never used                                                                                   @typescript-eslint/no-unused-vars
+   80:42  error    Unexpected any. Specify a different type                                                                              @typescript-eslint/no-explicit-any
+   84:52  error    Unexpected any. Specify a different type                                                                              @typescript-eslint/no-explicit-any
+  109:6   warning  React Hook useEffect has a missing dependency: 'fetchDealerOrders'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  120:43  error    Unexpected any. Specify a different type                                                                              @typescript-eslint/no-explicit-any
+  129:18  error    'b' is never reassigned. Use 'const' instead                                                                          prefer-const
+  131:82  error    Unexpected any. Specify a different type                                                                              @typescript-eslint/no-explicit-any
+  183:14  warning  'err' is defined but never used                                                                                       @typescript-eslint/no-unused-vars
+  222:45  error    Unexpected any. Specify a different type                                                                              @typescript-eslint/no-explicit-any
+  242:22  warning  'e' is defined but never used                                                                                         @typescript-eslint/no-unused-vars
+  312:21  error    Unexpected any. Specify a different type                                                                              @typescript-eslint/no-explicit-any
+  358:21  error    Unexpected any. Specify a different type                                                                              @typescript-eslint/no-explicit-any
+  374:11  error    'downloadLink' is never reassigned. Use 'const' instead                                                               prefer-const
+  467:28  error    Unexpected any. Specify a different type                                                                              @typescript-eslint/no-explicit-any
+  494:54  error    Unexpected any. Specify a different type                                                                              @typescript-eslint/no-explicit-any
+  515:33  error    Unexpected any. Specify a different type                                                                              @typescript-eslint/no-explicit-any
+
+C:\Users\KETAN\Downloads\inventory-management-system\src\app\dashboard\page.tsx
+    4:31  warning  'useRef' is defined but never used                                                                                                @typescript-eslint/no-unused-vars
+   33:60  error    Unexpected any. Specify a different type                                                                                          @typescript-eslint/no-explicit-any
+   39:56  error    Unexpected any. Specify a different type                                                                                          @typescript-eslint/no-explicit-any
+   44:52  error    Unexpected any. Specify a different type                                                                                          @typescript-eslint/no-explicit-any
+  115:12  error    Unexpected any. Specify a different type                                                                                          @typescript-eslint/no-explicit-any
+  123:21  error    Unexpected any. Specify a different type                                                                                          @typescript-eslint/no-explicit-any
+  154:24  error    Unexpected any. Specify a different type                                                                                          @typescript-eslint/no-explicit-any
+  159:25  error    Unexpected any. Specify a different type                                                                                          @typescript-eslint/no-explicit-any
+  187:4   warning  React Hook useEffect has missing dependencies: 'userCity' and 'userLocation'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+  299:21  error    Unexpected any. Specify a different type                                                                                          @typescript-eslint/no-explicit-any
+
+C:\Users\KETAN\Downloads\inventory-management-system\src\app\verify\[batchId]\page.tsx
+    9:40  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   46:14  warning  'err' is defined but never used           @typescript-eslint/no-unused-vars
+  117:76  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\KETAN\Downloads\inventory-management-system\src\components\InstallPrompt.tsx
+  7:56  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\KETAN\Downloads\inventory-management-system\src\lib\blockchain\inventoryChain.ts
+   9:47  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  21:40  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  82:17  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\KETAN\Downloads\inventory-management-system\src\lib\blockchain\provider.ts
+  20:51  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  22:60  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\KETAN\Downloads\inventory-management-system\start-ganache.js
+  1:17  error  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+
+Γ£û 80 problems (60 errors, 20 warnings)
+  2 errors and 0 warnings potentially fixable with the `--fix` option.
+

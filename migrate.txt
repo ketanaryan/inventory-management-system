@@ -1,0 +1,43 @@
+﻿
+Compiling your contracts...
+===========================
+> Compiling .\contracts\InventoryChain.sol
+> Artifacts written to C:\Users\KETAN\Downloads\inventory-management-system\src\lib\blockchain\compiled
+> Compiled successfully using:
+   - solc: 0.8.19+commit.7dd6d404.Emscripten.clang
+
+
+Starting migrations...
+======================
+> Network name:    'development'
+> Network id:      1774896934189
+> Block gas limit: 30000000 (0x1c9c380)
+
+
+1_deploy_inventory.js
+=====================
+
+   Deploying 'InventoryChain'
+   --------------------------
+   > transaction hash:    0x711715d70e643997ff529e44a2bb60b8a830002acce8876855f876620f4f414a
+   > Blocks: 0            Seconds: 0
+   > contract address:    0xe78A0F7E598Cc8b0Bb87894B0F60dD2a88d6a8Ab
+   > block number:        1
+   > block timestamp:     1774897004
+   > account:             0x90F8bf6A479f320ead074411a4B0e7944Ea8c9C1
+   > balance:             999.997706954125
+   > gas used:            679421 (0xa5dfd)
+   > gas price:           3.375 gwei
+   > value sent:          0 ETH
+   > total cost:          0.002293045875 ETH
+
+   > Saving artifacts
+   -------------------------------------
+   > Total cost:      0.002293045875 ETH
+
+Summary
+=======
+> Total deployments:   1
+> Final cost:          0.002293045875 ETH
+
+

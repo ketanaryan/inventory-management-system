@@ -1,108 +1,122 @@
 import { GoogleGenAI } from '@google/genai';
 import { NextResponse } from 'next/server';
+import { rateLimit, getClientIp } from '@/lib/rateLimit';
 
-// CORS configuration for local network and PWA access
+const ALLOWED_ORIGIN = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+
 const corsHeaders = {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+  'Access-Control-Allow-Origin': ALLOWED_ORIGIN,
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
 };
+
+// Allowed actions — strict whitelist to prevent injection via `action` field
+const ALLOWED_ACTIONS = new Set(['getAlternatives', 'getDrugInfo']);
+
+// Max drug name length to prevent prompt injection attempts
+const MAX_DRUG_NAME_LENGTH = 100;
 
 export async function OPTIONS() {
-    return NextResponse.json({}, { headers: corsHeaders });
+  return NextResponse.json({}, { headers: corsHeaders });
 }
 
-// Define the schema for structured JSON output
-const DrugInfoSchema = {
-    type: "object",
-    properties: {
-        description: {
-            type: "string",
-            description: "A brief, 3-sentence description of the drug."
-        },
-        use_cases: {
-            type: "array",
-            items: { type: "string" },
-            description: "List the primary conditions this drug treats."
-        },
-        generic_alternative: {
-            type: "string",
-            description: "The main generic (chemical) alternative name for the drug, e.g., 'Paracetamol'."
-        },
-        warnings: {
-            type: "string",
-            description: "One short, critical warning about the drug."
-        }
-    },
-    required: ["description", "use_cases", "generic_alternative", "warnings"]
-};
-
 export async function POST(request: Request) {
-    try {
-        const { drugName, action } = await request.json();
+  // 1. Rate limiting — 15 requests per minute per IP
+  const ip = getClientIp(request);
+  const { ok, remaining } = rateLimit(ip, 15, 60_000);
+  if (!ok) {
+    return NextResponse.json(
+      { error: 'Rate limit exceeded. Please wait a moment.' },
+      { status: 429, headers: { ...corsHeaders, 'X-RateLimit-Remaining': '0' } }
+    );
+  }
 
-        if (!drugName) {
-            return NextResponse.json({ error: 'Drug name is required' }, { status: 400, headers: corsHeaders });
-        }
+  try {
+    const body = await request.json();
+    const { drugName, action } = body;
 
-        if (!process.env.GEMINI_API_KEY) {
-            return NextResponse.json({ error: 'GEMINI_API_KEY not configured.' }, { status: 500, headers: corsHeaders });
-        }
+    // 2. Input validation
+    if (!drugName || typeof drugName !== 'string') {
+      return NextResponse.json({ error: 'Drug name is required' }, { status: 400, headers: corsHeaders });
+    }
 
-        const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+    // Sanitize: strip control characters and limit length
+    const cleanDrugName = drugName.replace(/[\x00-\x1F\x7F]/g, '').trim().slice(0, MAX_DRUG_NAME_LENGTH);
+    if (!cleanDrugName) {
+      return NextResponse.json({ error: 'Invalid drug name' }, { status: 400, headers: corsHeaders });
+    }
 
-        if (action === "getAlternatives") {
-            const prompt = `
-You are a pharmaceutical expert system.
-Given the following medicine name: "${drugName}", provide its generic alternatives, purpose, and precautions.
-Return the response strictly as a JSON object with this exact structure:
+    // 3. Whitelist action values to prevent injection
+    if (action && !ALLOWED_ACTIONS.has(action)) {
+      return NextResponse.json({ error: 'Invalid action' }, { status: 400, headers: corsHeaders });
+    }
+
+    if (!process.env.GEMINI_API_KEY) {
+      return NextResponse.json({ error: 'AI service not configured.' }, { status: 500, headers: corsHeaders });
+    }
+
+    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+
+    if (action === 'getAlternatives') {
+      // Use a fixed template — drug name is inserted as a value, not as instructions
+      const prompt = `You are a pharmaceutical expert system.
+Given the medicine: "${cleanDrugName}", provide its generic alternatives, purpose, and precautions.
+Return strictly as JSON with this exact structure:
 {
   "name": "Original Medicine Name",
   "genericName": "Generic Name(s)",
-  "purpose": "A brief description of what it is used for",
+  "purpose": "Brief description of what it is used for",
   "alternatives": [
-    { "name": "Alternative Name 1", "manufacturer": "Manufacturer 1" },
-    { "name": "Alternative Name 2", "manufacturer": "Manufacturer 2" }
+    { "name": "Alternative Name 1", "manufacturer": "Manufacturer 1" }
   ],
   "precautions": ["Precaution 1", "Precaution 2"]
 }
-Limit alternatives to maximum 5 items.
-Ensure the response is valid JSON and nothing else. No markdown formatting like \`\`\`json.
-`;
-            const response = await ai.models.generateContent({
-                model: "gemini-2.5-flash",
-                contents: prompt,
-            });
+Limit alternatives to 5 items. Valid JSON only. No markdown.`;
 
-            const text = response.text || "";
-            // Clean potential markdown from response
-            const cleanJson = text.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
-            
-            return NextResponse.json(JSON.parse(cleanJson), { headers: corsHeaders });
-        }
+      const response = await ai.models.generateContent({
+        model: 'gemini-2.5-flash',
+        contents: prompt,
+      });
 
-        // Default DrugInfo logic
-        const prompt = `Analyze the drug '${drugName}'. Provide its description, primary uses, and its main generic alternative. Ensure the output strictly follows the provided JSON schema.`;
+      const text = response.text || '';
+      const cleanJson = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
 
-        const response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash',
-            contents: [{ role: 'user', parts: [{ text: prompt }] }],
-            config: {
-                responseMimeType: 'application/json',
-                responseSchema: DrugInfoSchema,
-            }
-        });
+      let parsed;
+      try {
+        parsed = JSON.parse(cleanJson);
+      } catch {
+        return NextResponse.json({ error: 'AI returned invalid format. Please try again.' }, { status: 502, headers: corsHeaders });
+      }
 
-        if (!response.text) {
-            throw new Error('No response text received from Gemini API.');
-        }
-        const jsonText = response.text.trim();
-        const drugInfo = JSON.parse(jsonText);
-
-        return NextResponse.json(drugInfo, { headers: corsHeaders });
-
-    } catch (error) {
-        console.error('Gemini API Error:', error);
-        return NextResponse.json({ error: 'Failed to fetch AI data.' }, { status: 500, headers: corsHeaders });
+      return NextResponse.json(parsed, {
+        headers: { ...corsHeaders, 'X-RateLimit-Remaining': String(remaining) }
+      });
     }
+
+    // Default: getDrugInfo
+    const prompt = `Analyze the drug "${cleanDrugName}". Provide its description, primary uses, and its main generic alternative. Output valid JSON only matching: { "description": "...", "use_cases": ["..."], "generic_alternative": "...", "warnings": "..." }`;
+
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: prompt,
+    });
+
+    if (!response.text) throw new Error('No response text received.');
+
+    let drugInfo;
+    try {
+      const cleanText = response.text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+      drugInfo = JSON.parse(cleanText);
+    } catch {
+      return NextResponse.json({ error: 'AI returned invalid format. Please try again.' }, { status: 502, headers: corsHeaders });
+    }
+
+    return NextResponse.json(drugInfo, {
+      headers: { ...corsHeaders, 'X-RateLimit-Remaining': String(remaining) }
+    });
+
+  } catch (error: any) {
+    console.error('Drug-info API Error:', error.message);
+    return NextResponse.json({ error: 'Failed to fetch AI data. Please try again.' }, { status: 500, headers: corsHeaders });
+  }
 }

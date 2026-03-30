@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/utils/supabase";
 import { ShieldCheck, ShieldAlert, Calendar, Package, Info } from "lucide-react";
+import { getBatchFromBlockchain } from "@/lib/blockchain/inventoryChain";
 
 export default function VerifyBatchPage() {
   const [batchId, setBatchId] = useState("");
@@ -30,6 +31,23 @@ export default function VerifyBatchPage() {
     setResult(null);
 
     try {
+      // 1. Check Blockchain Truth FIRST
+      let isRecalledOnChain = false;
+      try {
+        const chainData = await getBatchFromBlockchain(batchId);
+        if (chainData && chainData.status === "Recalled") {
+          isRecalledOnChain = true;
+        } else if (!chainData) {
+          throw new Error("Not found on blockchain");
+        }
+      } catch (err: any) {
+        console.error("Blockchain error:", err);
+        setMessage("Counterfeit Warning: This Batch ID does not exist on the Blockchain Ledger.");
+        setLoading(false);
+        return;
+      }
+
+      // 2. Fetch rich UI details from Database
       const { data, error } = await supabase
         .from("batches")
         .select("*")
@@ -37,9 +55,14 @@ export default function VerifyBatchPage() {
         .single();
 
       if (error || !data) {
-        setMessage("Counterfeit Warning: This Batch ID does not exist in the official records.");
+        setMessage("Warning: Found on-chain but details missing from off-chain database.");
         setLoading(false);
         return;
+      }
+
+      // 3. Enforce Blockchain Truth over Database (if tampered)
+      if (isRecalledOnChain) {
+         data.status = "Recalled";
       }
 
       setResult(data);

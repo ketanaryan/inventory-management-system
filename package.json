@@ -19,6 +19,7 @@
     "@supabase/auth-helpers-nextjs": "^0.10.0",
     "@supabase/supabase-js": "^2.57.4",
     "dexie": "^4.3.0",
+    "ethers": "^6.16.0",
     "html5-qrcode": "^2.3.8",
     "leaflet": "^1.9.4",
     "lucide-react": "^0.577.0",
@@ -44,7 +45,9 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "15.5.3",
+    "ganache": "^7.7.7",
     "tailwindcss": "^4",
+    "truffle": "^5.11.5",
     "typescript": "^5"
   }
 }

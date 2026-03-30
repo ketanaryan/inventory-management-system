@@ -5,6 +5,8 @@ import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/utils/supabase";
 import { QRCodeCanvas } from "qrcode.react";
 import { User } from "@supabase/supabase-js";
+import BlockchainStatus from "@/components/BlockchainStatus";
+import { logBatchToBlockchain, getBatchFromBlockchain } from "@/lib/blockchain/inventoryChain";
 
 
 
@@ -24,6 +26,18 @@ export default function DashboardPage() {
   // Recall/Deactivate state
   const [recallBatchId, setRecallBatchId] = useState("");
   const [recallMessage, setRecallMessage] = useState("");
+
+  // Blockchain state - Register
+  const [bcRegisterLoading, setBcRegisterLoading] = useState(false);
+  const [bcRegisterTxHash, setBcRegisterTxHash] = useState<string | undefined>();
+  const [bcRegisterRecord, setBcRegisterRecord] = useState<any>(null);
+  const [bcRegisterError, setBcRegisterError] = useState<string | undefined>();
+
+  // Blockchain state - Recall
+  const [bcRecallLoading, setBcRecallLoading] = useState(false);
+  const [bcRecallTxHash, setBcRecallTxHash] = useState<string | undefined>();
+  const [bcRecallRecord, setBcRecallRecord] = useState<any>(null);
+  const [bcRecallError, setBcRecallError] = useState<string | undefined>();
 
   // Find Alternatives state
   const [searchQuery, setSearchQuery] = useState("");
@@ -248,6 +262,9 @@ useEffect(() => {
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setMessage("");
+    setBcRegisterTxHash(undefined);
+    setBcRegisterRecord(null);
+    setBcRegisterError(undefined);
 
     if (
       !batchId.trim() ||
@@ -258,44 +275,78 @@ useEffect(() => {
     }
 
     try {
-      const { data, error } = await supabase
+      // 1. Save to Supabase first
+      const { error } = await supabase
         .from("batches")
         .insert([{ batch_id: batchId, medicines: medicines }]);
 
-      if (error) {
-        throw new Error(error.message);
-      }
+      if (error) throw new Error(error.message);
 
       const verificationUrl = `${window.location.origin}/verify/${batchId}`;
       setQrValue(verificationUrl);
-      setMessage("Batch registered successfully!");
+      setMessage("Batch registered in database!");
+
+      // 2. Log to Blockchain
+      setBcRegisterLoading(true);
+      const drugName = medicines.map((m) => m.name).join(", ");
+      const txHash = await logBatchToBlockchain(batchId, batchId, drugName, "Registered");
+      setBcRegisterTxHash(txHash);
+
+      // 3. Fetch back the on-chain record to display
+      const record = await getBatchFromBlockchain(batchId);
+      setBcRegisterRecord(record);
+      setMessage("Batch registered on database & blockchain! ✅");
     } catch (error: any) {
       if (error instanceof Error) {
         setMessage(`Error: ${error.message}`);
+        // If the DB step succeeded but blockchain failed, show blockchain error separately
+        if (error.message.includes("Ganache") || error.message.includes("contract") || error.message.includes("network")) {
+          setBcRegisterError(error.message);
+        }
       } else {
         setMessage("An unknown error occurred.");
       }
+    } finally {
+      setBcRegisterLoading(false);
     }
   };
 
   const handleRecall = async (e: React.FormEvent) => {
     e.preventDefault();
     setRecallMessage("");
+    setBcRecallTxHash(undefined);
+    setBcRecallRecord(null);
+    setBcRecallError(undefined);
     try {
+      // 1. Update Supabase
       const { error } = await supabase
         .from("batches")
         .update({ status: "Recalled" })
         .eq("batch_id", recallBatchId);
-      if (error) {
-        throw new Error(error.message);
-      }
-      setRecallMessage("Batch recalled successfully!");
+      if (error) throw new Error(error.message);
+
+      setRecallMessage("Batch recalled in database!");
+
+      // 2. Log recall event to blockchain
+      setBcRecallLoading(true);
+      const txHash = await logBatchToBlockchain(recallBatchId, recallBatchId, "Unknown Drug", "Recalled");
+      setBcRecallTxHash(txHash);
+
+      // 3. Fetch back on-chain record
+      const record = await getBatchFromBlockchain(recallBatchId);
+      setBcRecallRecord(record);
+      setRecallMessage("Batch recalled on database & blockchain! ✅");
     } catch (error) {
       if (error instanceof Error) {
         setRecallMessage(`Error: ${error.message}`);
+        if (error.message.includes("Ganache") || error.message.includes("contract") || error.message.includes("network")) {
+          setBcRecallError(error.message);
+        }
       } else {
         setRecallMessage("An unknown error occurred.");
       }
+    } finally {
+      setBcRecallLoading(false);
     }
   };
 
@@ -516,11 +567,18 @@ useEffect(() => {
             </button>
             <button
               type="submit"
-              className="w-full mt-4 bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded"
+              disabled={bcRegisterLoading}
+              className="w-full mt-4 bg-blue-500 hover:bg-blue-600 disabled:opacity-60 text-white font-bold py-2 px-4 rounded transition"
             >
-              Register on Blockchain
+              {bcRegisterLoading ? "⛓️ Writing to Blockchain..." : "Register on Blockchain"}
             </button>
           </form>
+          <BlockchainStatus
+            txHash={bcRegisterTxHash}
+            blockchainRecord={bcRegisterRecord}
+            loading={bcRegisterLoading}
+            error={bcRegisterError}
+          />
           {/* QR Code */}
           {qrValue && (
             <div className="flex flex-col items-center justify-center mb-8">
@@ -568,9 +626,10 @@ useEffect(() => {
               </div>
               <button
                 type="submit"
-                className="w-full bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded"
+                disabled={bcRecallLoading}
+                className="w-full bg-red-500 hover:bg-red-600 disabled:opacity-60 text-white font-bold py-2 px-4 rounded transition"
               >
-                Set to Recalled
+                {bcRecallLoading ? "⛓️ Writing to Blockchain..." : "Set to Recalled"}
               </button>
               {recallMessage && (
                 <div
@@ -580,6 +639,12 @@ useEffect(() => {
                 </div>
               )}
             </form>
+            <BlockchainStatus
+              txHash={bcRecallTxHash}
+              blockchainRecord={bcRecallRecord}
+              loading={bcRecallLoading}
+              error={bcRecallError}
+            />
           </div>
 
           {/* Find Alternatives Section */}
