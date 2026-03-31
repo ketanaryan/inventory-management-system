@@ -1,31 +1,46 @@
 import { ethers } from "ethers";
 
-// The Ganache RPC URL — change port to 8545 if using Ganache CLI
+// The Ganache RPC URL for local development
 const GANACHE_RPC_URL = "http://127.0.0.1:7545";
 
 /**
- * Returns a read-only JSON-RPC provider pointing at local Ganache.
- * Use this for reading data from the blockchain without a wallet.
+ * Returns a read-only provider.
+ * In the browser, it tries to use the window.ethereum provider.
+ * Falls back to local Ganache.
  */
-export function getReadProvider(): ethers.JsonRpcProvider {
+export function getReadProvider(): ethers.Provider {
+  if (typeof window !== "undefined" && (window as any).ethereum) {
+    return new ethers.BrowserProvider((window as any).ethereum);
+  }
   return new ethers.JsonRpcProvider(GANACHE_RPC_URL);
 }
 
 /**
  * Returns a Signer (write access).
- * In the browser, this will use MetaMask if available.
- * Falls back to Ganache provider for a simple signing account (testing use only).
+ * In the browser, this will use MetaMask/Browser wallet.
+ * Falls back to Ganache provider for local testing only.
  */
 export async function getSigner(): Promise<ethers.Signer> {
-  // Bypass browser wallet (like Brave Wallet/MetaMask) for local prototyping
-  // so it doesn't pop up and block the UI.
-  
-  const provider = new ethers.JsonRpcProvider(GANACHE_RPC_URL);
-  const accounts = await provider.listAccounts();
-  if (accounts.length === 0) {
-    throw new Error(
-      "No accounts found. Please ensure Ganache is running on port 7545."
-    );
+  // 1. Check for Browser Wallet (MetaMask)
+  if (typeof window !== "undefined" && (window as any).ethereum) {
+    const provider = new ethers.BrowserProvider((window as any).ethereum);
+    // Request account access if needed
+    await (window as any).ethereum.request({ method: 'eth_requestAccounts' });
+    return await provider.getSigner();
   }
-  return accounts[0];
+
+  // 2. Fallback to Local Ganache (Node.js or no-wallet browser testing)
+  try {
+    const provider = new ethers.JsonRpcProvider(GANACHE_RPC_URL);
+    const accounts = await provider.listAccounts();
+    if (accounts.length > 0) {
+      return accounts[0];
+    }
+  } catch (err) {
+    console.warn("Local Ganache not reachable. Please use a browser wallet like MetaMask.");
+  }
+
+  throw new Error(
+    "No blockchain wallet found. Please install MetaMask or ensure Ganache is running."
+  );
 }
