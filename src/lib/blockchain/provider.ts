@@ -1,7 +1,7 @@
 import { ethers } from "ethers";
 
-// We use a public Sepolia RPC URL so it works on mobile devices without MetaMask
-const SEPOLIA_RPC_URL = process.env.NEXT_PUBLIC_SEPOLIA_RPC_URL || "https://rpc.sepolia.org";
+// Using the provided Alchemy URL as the robust fallback for mobile users
+const SEPOLIA_RPC_URL = process.env.NEXT_PUBLIC_SEPOLIA_RPC_URL || "https://eth-sepolia.g.alchemy.com/v2/EfjLQ-HM89dm_smBJ8snq";
 
 /**
  * Returns a read-only provider.

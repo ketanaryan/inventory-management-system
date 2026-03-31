@@ -33,18 +33,21 @@ export default function VerifyBatchPage() {
     try {
       // 1. Check Blockchain Truth FIRST
       let isRecalledOnChain = false;
+      let blockchainUnavailable = false;
       try {
         const chainData = await getBatchFromBlockchain(batchId);
         if (chainData && chainData.status === "Recalled") {
           isRecalledOnChain = true;
         } else if (!chainData) {
-          throw new Error("Not found on blockchain");
+          // It successfully connected but didn't find the batch
+          setMessage("Counterfeit Warning: This Batch ID does not exist on the Blockchain Ledger.");
+          setLoading(false);
+          return;
         }
       } catch (err: any) {
         console.error("Blockchain error:", err);
-        setMessage("Counterfeit Warning: This Batch ID does not exist on the Blockchain Ledger.");
-        setLoading(false);
-        return;
+        // An RPC error occurred (node unavailable or CORS issue)
+        blockchainUnavailable = true;
       }
 
       // 2. Fetch rich UI details from Database
@@ -58,6 +61,10 @@ export default function VerifyBatchPage() {
         setMessage("Warning: Found on-chain but details missing from off-chain database.");
         setLoading(false);
         return;
+      }
+
+      if (blockchainUnavailable) {
+        setMessage("⚠️ Blockchain node unavailable — verifying from database only.");
       }
 
       // 3. Enforce Blockchain Truth over Database (if tampered)
