@@ -1,18 +1,18 @@
 import { ethers } from "ethers";
 
-// The Ganache RPC URL for local development
-const GANACHE_RPC_URL = "http://127.0.0.1:7545";
+// We use a public Sepolia RPC URL so it works on mobile devices without MetaMask
+const SEPOLIA_RPC_URL = process.env.NEXT_PUBLIC_SEPOLIA_RPC_URL || "https://rpc.sepolia.org";
 
 /**
  * Returns a read-only provider.
  * In the browser, it tries to use the window.ethereum provider.
- * Falls back to local Ganache.
+ * Falls back to Sepolia public RPC.
  */
 export function getReadProvider(): ethers.Provider {
   if (typeof window !== "undefined" && (window as any).ethereum) {
     return new ethers.BrowserProvider((window as any).ethereum);
   }
-  return new ethers.JsonRpcProvider(GANACHE_RPC_URL);
+  return new ethers.JsonRpcProvider(SEPOLIA_RPC_URL);
 }
 
 /**
@@ -29,18 +29,18 @@ export async function getSigner(): Promise<ethers.Signer> {
     return await provider.getSigner();
   }
 
-  // 2. Fallback to Local Ganache (Node.js or no-wallet browser testing)
+  // 2. Fallback to Local/RPC (Node.js or no-wallet browser testing)
   try {
-    const provider = new ethers.JsonRpcProvider(GANACHE_RPC_URL);
+    const provider = new ethers.JsonRpcProvider(SEPOLIA_RPC_URL);
     const accounts = await provider.listAccounts();
     if (accounts.length > 0) {
       return accounts[0];
     }
   } catch (err) {
-    console.warn("Local Ganache not reachable. Please use a browser wallet like MetaMask.");
+    console.warn("RPC not reachable. Please use a browser wallet like MetaMask.");
   }
 
   throw new Error(
-    "No blockchain wallet found. Please install MetaMask or ensure Ganache is running."
+    "No blockchain wallet found. Please install MetaMask or ensure an RPC is available."
   );
 }
