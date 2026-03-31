@@ -80,7 +80,10 @@ export async function getBatchFromBlockchain(id: string): Promise<{
       status: result[4],
     };
   } catch (err: any) {
-    if (err.message?.includes("Batch does not exist")) return null;
+    const errorStr = (err.message || "") + (err.reason || "") + (err.code || "");
+    if (errorStr.includes("Batch does not exist") || err.code === "CALL_EXCEPTION") {
+      return null;
+    }
     throw err;
   }
 }

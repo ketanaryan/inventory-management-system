@@ -297,7 +297,7 @@ export default function ConsumerDashboard() {
       setMessageType(batchData.status === "Recalled" ? "error" : "success");
       setMessage(batchData.status === "Recalled"
         ? "🚨 COMPROMISED BATCH — MEDICAL RECALL ACTIVE. DO NOT CONSUME."
-        : "✅ Authentic Product — Origin verified via blockchain trace."
+        : (!blockchainMsg ? "✅ Authentic Product — Origin verified via blockchain trace." : "✅ Authentic Product — Verified via database only.")
       );
     } else {
       console.error("Save failed:", insertError.message);
