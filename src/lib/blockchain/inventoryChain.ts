@@ -13,7 +13,13 @@ function getContractAddress(): string {
       "Contract not deployed yet. Please run: npx truffle migrate"
     );
   }
-  // Use the last deployed network
+  
+  // Always prefer the Sepolia network ID (11155111) if it exists
+  if (networks["11155111"]) {
+    return networks["11155111"].address;
+  }
+
+  // Otherwise fallback to the last deployed network
   const latestNetworkId = networkIds[networkIds.length - 1];
   return networks[latestNetworkId].address;
 }

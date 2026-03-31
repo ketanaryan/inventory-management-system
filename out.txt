@@ -1,0 +1,6 @@
+Connected to network: sepolia 11155111
+Contract Address: 0xe78A0F7E598Cc8b0Bb87894B0F60dD2a88d6a8Ab on network id: 1774896934189
+Fetching batch 999...
+Error occurred: could not decode result data (value="0x", info={ "method": "getBatch", "signature": "getBatch(string)" }, code=BAD_DATA, version=6.16.0)
+Error Code: BAD_DATA
+Error Reason: undefined
