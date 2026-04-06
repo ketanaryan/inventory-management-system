@@ -230,7 +230,7 @@ export default function ConsumerDashboard() {
 
     if (!navigator.onLine) {
       if (user) await saveScanOffline(user.id, batchId);
-      setMessage("📶 Offline connection. Scan cached locally and will sync when reconnected.");
+      setMessage("📶 Offline connection. Scan cached locally and will sync automatically when reconnected.");
       setMessageType("success");
       setResult({ batch_id: batchId, status: "Pending Sync" });
       setBatchId("");
