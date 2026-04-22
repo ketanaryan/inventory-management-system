@@ -71,7 +71,7 @@ export async function POST(req: Request) {
     ${dataStr.substring(0, 3000)}`;
 
     const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash-preview-04-17',
+      model: 'gemini-2.5-flash',
       contents: prompt,
     });
 

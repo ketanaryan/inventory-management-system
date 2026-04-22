@@ -77,7 +77,7 @@ Limit alternatives to 5 items. Valid JSON only. No markdown.`;
       for (let i = 0; i < 3; i++) {
         try {
           response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash-preview-04-17',
+            model: 'gemini-2.5-flash',
             contents: prompt,
           });
           break;
@@ -109,7 +109,7 @@ Limit alternatives to 5 items. Valid JSON only. No markdown.`;
     for (let i = 0; i < 3; i++) {
       try {
         response = await ai.models.generateContent({
-          model: 'gemini-2.5-flash-preview-04-17',
+          model: 'gemini-2.5-flash',
           contents: prompt,
         });
         break;
