@@ -1,0 +1,190 @@
+====================================================================
+PHARMATRACKER / INVENTORY MANAGEMENT SYSTEM
+COMPREHENSIVE TECHNICAL ARCHITECTURE & DEEP DIVE
+====================================================================
+
+This document provides a highly detailed, senior-level breakdown of the 
+technologies, design patterns, and architectural paradigms used in the 
+PharmaTracker Inventory Management System.
+
+--------------------------------------------------------------------
+1. ARCHITECTURAL PARADIGM: HYBRID WEB2 / WEB3
+--------------------------------------------------------------------
+The system utilizes a "Hybrid State" architecture. 
+- Fast, mutable, and heavy relational queries (like "show me all orders 
+  for this dealer") are handled by a traditional Web2 backend (Supabase/Postgres).
+- Immutable, high-trust state changes (like "this batch was manufactured" 
+  or "this batch is recalled") are anchored to a Web3 EVM-compatible 
+  blockchain. 
+This gives the application the speed of a modern SaaS while retaining the 
+trustless auditability of a blockchain.
+
+--------------------------------------------------------------------
+2. FRONTEND PRESENTATION LAYER
+--------------------------------------------------------------------
+* Next.js 16 (App Router): We use the latest App Router paradigm. 
+  - Server Components (RSC): Used by default to reduce JavaScript bundle sizes 
+    and improve Time To Interactive (TTI).
+  - Client Components ('use client'): Explicitly declared for interactive 
+    pages like the Dashboard where React hooks (useState, useEffect) and 
+    browser APIs (localStorage, IndexedDB) are required.
+* React 19: Leveraging concurrent rendering features.
+* Tailwind CSS v4: Utility-first CSS framework. We use custom theme variables 
+  (CSS variables mapped to Tailwind configuration) to support dynamic Light/Dark 
+  modes via the ThemeToggle component.
+* Data Visualization: 'recharts' is used to parse raw database arrays into 
+  SVG-based Pie, Bar, and Line charts. We heavily use useMemo() to memoize 
+  the heavy array mapping functions (like expiry risk calculation) to prevent 
+  unnecessary re-renders.
+
+--------------------------------------------------------------------
+3. BACKEND SERVERLESS API LAYER
+--------------------------------------------------------------------
+* Next.js Route Handlers (src/app/api/...): 
+  - Instead of a traditional monolithic Node/Express server, backend logic is 
+    decoupled into serverless functions.
+  - Security: API routes validate Supabase Bearer tokens from the 
+    'Authorization' header before processing requests.
+  - Rate Limiting: A custom in-memory or Redis-backed rate limiter is applied 
+    to heavy endpoints (like the AI Insights route) using the client's IP address.
+
+--------------------------------------------------------------------
+4. DATABASE & AUTHENTICATION (SUPABASE / POSTGRESQL)
+--------------------------------------------------------------------
+* Authentication: Supabase Auth handles JWT issuance. We utilize a Role-Based 
+  Access Control (RBAC) model. Upon login, the user's role directs them to 
+  specific dashboard routes (/dashboard/manufacturer, /dashboard/dealer, etc.).
+* Database (PostgreSQL): 
+  - The schema consists of tables like 'batches' and 'dealer_orders'.
+  - JSONB Data Types: Inside the 'batches' table, the actual array of medicines 
+    (name, quantity, expiry) is stored as a JSONB column. This allows dynamic 
+    schema flexibility without requiring separate relational tables for every 
+    single pill type.
+  - Row Level Security (RLS): Supabase allows us to apply Postgres RLS policies, 
+    ensuring a dealer can only fetch orders where `dealer_id = auth.uid()`.
+
+--------------------------------------------------------------------
+5. BLOCKCHAIN & CRYPTOGRAPHY LAYER
+--------------------------------------------------------------------
+* Smart Contracts (Solidity): We deployed an 'InventoryChain' contract. It 
+  maintains a mapping of 'Batch IDs' to 'Batch Metadata' (drugName, status, 
+  timestamp).
+* Local Node / Testnet: Deployed using the Truffle suite to a local Ganache 
+  instance during development, or Sepolia for staging.
+* Ethers.js v6 Integration (src/lib/blockchain/inventoryChain.ts):
+  - When a manufacturer clicks "Register Batch", the frontend instantiates an 
+    ethers.Contract object using the contract's Application Binary Interface (ABI).
+  - It triggers MetaMask (or a Truffle HDWalletProvider) to prompt the user to 
+    cryptographically sign the transaction.
+  - The function awaits the transaction to be mined (`await tx.wait()`) and 
+    returns the Transaction Hash (TxHash), which acts as the immutable receipt.
+
+--------------------------------------------------------------------
+6. ARTIFICIAL INTELLIGENCE (GOOGLE GEN-AI)
+--------------------------------------------------------------------
+* Google Gemini 2.5 Flash: Chosen for its low latency and high context window.
+* Implementation (src/app/api/insights/route.ts):
+  - The frontend sends the entire active inventory array to the API.
+  - The API performs a sanity check (limiting payload size to prevent token 
+    overflow).
+  - Prompt Engineering: We enforce a strict prompt format: "Format your response 
+    as a valid JSON array of strings. Do not add any markdown formatting."
+  - Output Parsing: The server parses the AI's raw text using regex to extract 
+    the JSON array, ensuring the frontend doesn't crash on malformed AI output.
+
+--------------------------------------------------------------------
+7. PAYMENT GATEWAYS (STRIPE & RAZORPAY)
+--------------------------------------------------------------------
+* Dual Gateway Architecture: 
+  - To support global (Stripe) and Indian domestic (Razorpay) markets.
+  - Next.js API endpoints (`/api/create-checkout-session` and 
+    `/api/create-razorpay-order`) safely interact with gateway secret keys.
+  - They generate short-lived tokens/session IDs passed back to the frontend, 
+    where the respective SDK renders the secure iframe/modal to capture PCI-
+    compliant payment details.
+
+--------------------------------------------------------------------
+8. OFFLINE-FIRST PWA & MOBILE ARCHITECTURE
+--------------------------------------------------------------------
+* Progressive Web App (next-pwa): Registers a Service Worker that caches static 
+  assets (HTML, CSS, JS, Images), allowing the app skeleton to load offline.
+* Capacitor: Wraps the Next.js web build into a native Android WebView, giving 
+  the app access to native device APIs if needed.
+* Offline Database Sync (Dexie.js):
+  - If a field worker scans a QR code without internet, the standard Supabase 
+    fetch fails.
+  - Fallback: The app uses Dexie.js (a wrapper around IndexedDB) to save the 
+    OfflineScanEvent (batchId, timestamp) locally.
+  - Background Sync: Once `window.navigator.onLine` fires true, a background 
+    sync function reads the pending scans from Dexie, pushes them to the Supabase 
+    backend, and clears the local queue.
+
+--------------------------------------------------------------------
+9. UTILITIES & EDGE INTEGRATIONS
+--------------------------------------------------------------------
+* File Parsing (xlsx): Manufacturers can upload `.xlsx` files. The app reads 
+  it via the FileReader API as an ArrayBuffer. `xlsx` parses the buffer on the 
+  client side, converting the spreadsheet into a JavaScript array of objects for 
+  bulk batch registration.
+* Barcode/QR Systems: 
+  - Generation: `qrcode.react` takes the Batch Verification URL and encodes it 
+    into a Canvas element.
+  - Scanning: `html5-qrcode` interfaces with the device's camera via WebRTC 
+    (`navigator.mediaDevices.getUserMedia`) to scan and decode hashes in real-time.
+* Mapping: 'Leaflet' handles geospatial rendering for tracking shipments without 
+  the heavy overhead of Google Maps SDKs.
+
+--------------------------------------------------------------------
+SUMMARY FOR TECHNICAL INTERVIEWS / JUDGES
+--------------------------------------------------------------------
+"The architecture is designed to solve three distinct supply chain problems:
+1. Speed & Usability: Handled by Next.js, React, and Supabase.
+2. Trust & Counterfeit Prevention: Handled by Ethers.js and Solidity.
+3. Field Operations & Poor Connectivity: Handled by Dexie.js offline queues 
+   and PWA caching.
+By decoupling these layers, the system achieves enterprise-grade reliability 
+without sacrificing modern UX."
+
+--------------------------------------------------------------------
+10. DASHBOARD IMPLEMENTATION DETAILS (React & State)
+--------------------------------------------------------------------
+The four dashboards (Manufacturer, Dealer, Hospital, Consumer) share a 
+common React architecture but implement different role-specific logic.
+
+* State Management: 
+  - Standard 'useState' handles UI toggles (activeTab, sidebarOpen) and 
+    form inputs (medicineName, batchId).
+  - Heavy calculations, like grouping medicines by expiry date or 
+    calculating Recharts data arrays, are memoized using 'useMemo'. This 
+    prevents expensive array parsing on every render cycle.
+
+* Data Fetching & Authentication: 
+  - 'useEffect' hooks run on component mount, validating the session via 
+    `supabase.auth.getUser()`. If authenticated, they trigger data fetching 
+    functions (e.g., `fetchBatches`, `fetchOrders`) which directly query 
+    PostgreSQL tables using the Supabase client.
+
+* Component Architecture & UI: 
+  - All dashboards use a shared Sidebar and Header structure.
+  - Icons are provided by 'lucide-react'. 
+  - We use 'recharts' extensively. For example, the Hospital dashboard 
+    maps the active inventory array into a 'BarChart' to visualize 
+    Expiry Risk (<30 days vs >90 days).
+  - Conditional rendering (switch statements on 'activeTab') is used 
+    to navigate between views (Overview, Orders, Verification) without 
+    triggering full page reloads, making it a true Single Page Application (SPA).
+
+* Blockchain API Interactions:
+  - We maintain an 'isBlockchainSigning' boolean state. 
+  - When writing to the ledger (e.g., `logBatchToBlockchain`), the UI shows 
+    a loading spinner while waiting for the EVM transaction to be mined.
+  - When verifying a batch, we query the contract first using 
+    `getBatchFromBlockchain`. Only if it returns a valid response do we 
+    fallback to querying Supabase for the rich metadata (like exact pill quantities).
+
+* Offline Sync (Hospital & Consumer):
+  - A 'window.addEventListener("online", ...)' hook is registered on mount.
+  - If a scan occurs offline, `saveScanOffline` (Dexie.js) saves it locally.
+  - When the browser fires the 'online' event, it retrieves pending scans 
+    (`getPendingScans`), bulk-inserts them into Supabase via `supabase.from().insert()`, 
+    and clears the local queue (`clearPendingScans`).

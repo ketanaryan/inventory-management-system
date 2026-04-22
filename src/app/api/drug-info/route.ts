@@ -74,7 +74,7 @@ Return strictly as JSON with this exact structure:
 Limit alternatives to 5 items. Valid JSON only. No markdown.`;
 
       const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
+        model: 'gemini-2.5-flash-preview-04-17',
         contents: prompt,
       });
 
@@ -97,7 +97,7 @@ Limit alternatives to 5 items. Valid JSON only. No markdown.`;
     const prompt = `Analyze the drug "${cleanDrugName}". Provide its description, primary uses, and its main generic alternative. Output valid JSON only matching: { "description": "...", "use_cases": ["..."], "generic_alternative": "...", "warnings": "..." }`;
 
     const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-2.5-flash-preview-04-17',
       contents: prompt,
     });
 
