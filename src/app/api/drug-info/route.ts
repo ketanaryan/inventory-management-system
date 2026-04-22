@@ -73,12 +73,21 @@ Return strictly as JSON with this exact structure:
 }
 Limit alternatives to 5 items. Valid JSON only. No markdown.`;
 
-      const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash-preview-04-17',
-        contents: prompt,
-      });
+      let response;
+      for (let i = 0; i < 3; i++) {
+        try {
+          response = await ai.models.generateContent({
+            model: 'gemini-2.5-flash-preview-04-17',
+            contents: prompt,
+          });
+          break;
+        } catch (e) {
+          if (i === 2) throw e;
+          await new Promise(r => setTimeout(r, 1000));
+        }
+      }
 
-      const text = response.text || '';
+      const text = response?.text || '';
       const cleanJson = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
 
       let parsed;
@@ -96,12 +105,21 @@ Limit alternatives to 5 items. Valid JSON only. No markdown.`;
     // Default: getDrugInfo
     const prompt = `Analyze the drug "${cleanDrugName}". Provide its description, primary uses, and its main generic alternative. Output valid JSON only matching: { "description": "...", "use_cases": ["..."], "generic_alternative": "...", "warnings": "..." }`;
 
-    const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash-preview-04-17',
-      contents: prompt,
-    });
+    let response;
+    for (let i = 0; i < 3; i++) {
+      try {
+        response = await ai.models.generateContent({
+          model: 'gemini-2.5-flash-preview-04-17',
+          contents: prompt,
+        });
+        break;
+      } catch (e) {
+        if (i === 2) throw e;
+        await new Promise(r => setTimeout(r, 1000));
+      }
+    }
 
-    if (!response.text) throw new Error('No response text received.');
+    if (!response?.text) throw new Error('No response text received.');
 
     let drugInfo;
     try {
