@@ -151,8 +151,7 @@ export default function ConsumerDashboard() {
 
     const fetchNearbyHospitals = async (lat: number, lng: number) => {
       try {
-        const query = `[out:json];(node["amenity"="hospital"](around:5000, ${lat}, ${lng});way["amenity"="hospital"](around:5000, ${lat}, ${lng});relation["amenity"="hospital"](around:5000, ${lat}, ${lng}););out center;`;
-        const url = `https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`;
+        const url = `/api/osm?lat=${lat}&lng=${lng}`;
         const response = await fetch(url);
         const data = await response.json();
         const hospitalIcon = L.divIcon({
@@ -230,7 +229,7 @@ export default function ConsumerDashboard() {
 
     if (!navigator.onLine) {
       if (user) await saveScanOffline(user.id, batchId);
-      setMessage("📶 Offline connection. Scan cached locally and will sync when reconnected.");
+      setMessage("📶 Offline connection. Scan cached locally and will sync automatically when reconnected.");
       setMessageType("success");
       setResult({ batch_id: batchId, status: "Pending Sync" });
       setBatchId("");
